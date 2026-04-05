@@ -1,0 +1,65 @@
+{
+  "kind": "internal-planning",
+  "updatedAt": "2026-04-03T14:44:00.000Z",
+  "note": "Internal planning data for Build Lab lanes. Track metadata is planning state; artifact inventory must still come from real filesystem sources.",
+  "tracks": [
+    {
+      "id": "mission-control-shell",
+      "name": "Mission Control shell and module routing",
+      "lane": "production",
+      "status": "active",
+      "owner": "Rohan",
+      "goal": "Ship a usable dashboard shell with Command, Briefing, Build Lab, and Runtime navigation.",
+      "nextAction": "Keep the shell stable while runtime adapters and module-level empty/error states are hardened.",
+      "outcomeOrLesson": "The shell should stay thin. Runtime and planning data must remain separated at the service layer.",
+      "sourceRefs": [
+        "Brendan request 2026-04-03 07:44 PDT"
+      ]
+    },
+    {
+      "id": "runtime-adapter-hardening",
+      "name": "OpenClaw runtime adapter hardening",
+      "lane": "production",
+      "status": "active",
+      "owner": "Roy",
+      "goal": "Expose real sessions, tasks, cron, model state, and health without inventing interfaces.",
+      "nextAction": "Keep using verified CLI-backed sources and expand only when a new runtime source has been confirmed.",
+      "outcomeOrLesson": "Sessions, tasks, cron, model config, and health are already queryable. Lobster history is not yet proven beyond the current TaskFlow source.",
+      "sourceRefs": [
+        "openclaw sessions --json",
+        "openclaw tasks list --json",
+        "openclaw cron list --all --json",
+        "openclaw models status --json",
+        "openclaw health --json"
+      ]
+    },
+    {
+      "id": "bootcamp-translation-lane",
+      "name": "Bootcamp lesson translation into owned work",
+      "lane": "exploratory",
+      "status": "watching",
+      "owner": "Jarvis",
+      "goal": "Translate implementation lessons into concrete frontend, backend, and manual task lanes.",
+      "nextAction": "Add durable translation notes only when a lesson changes execution or saves future rework.",
+      "outcomeOrLesson": "Tutorial input is useful, but it should never be treated as runtime truth or production readiness by default.",
+      "sourceRefs": [
+        "SOUL.md",
+        "USER.md",
+        "MEMORY.md"
+      ]
+    },
+    {
+      "id": "cost-telemetry-follow-up",
+      "name": "Deeper usage cost telemetry",
+      "lane": "deferred",
+      "status": "blocked",
+      "owner": "Roy",
+      "goal": "Show trustworthy request, token, and cost metrics per workload once the runtime source actually produces them.",
+      "nextAction": "Revisit after `openclaw gateway usage-cost --json` returns non-zero or more granular workload data.",
+      "outcomeOrLesson": "Current usage-cost totals are structurally available but currently zero-valued, so the UI should stay conservative.",
+      "sourceRefs": [
+        "openclaw gateway usage-cost --json"
+      ]
+    }
+  ]
+}

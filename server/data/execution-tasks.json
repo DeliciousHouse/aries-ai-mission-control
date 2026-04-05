@@ -1,0 +1,106 @@
+{
+  "kind": "internal-planning",
+  "updatedAt": "2026-04-03T14:44:00.000Z",
+  "note": "Internal planning data for Aries Mission Control. This file is allowed to hold human planning state, but it must never be treated as runtime telemetry.",
+  "tasks": [
+    {
+      "id": "fix-repair-sweep-launcher",
+      "title": "Fix repair sweep launcher entrypoint",
+      "owner": "Roy",
+      "status": "todo",
+      "priority": "P0",
+      "workstream": "runtime",
+      "dueDate": null,
+      "blocked": false,
+      "blockerReason": null,
+      "dependencies": [
+        "Confirm the valid Lobster pipeline or skill entrypoint for the repair sweep"
+      ],
+      "nextAction": "Inspect the current repair sweep launcher and replace the invalid workflow path with a verified runnable entrypoint.",
+      "sourceRefs": [
+        "openclaw tasks list --json",
+        "openclaw cron list --all --json"
+      ],
+      "description": "Nightly repair sweep failures show the launcher calling an invalid workflow path instead of a verified runtime entrypoint."
+    },
+    {
+      "id": "stabilize-automation-model-auth",
+      "title": "Stabilize model auth / billing failures affecting overnight jobs",
+      "owner": "Roy",
+      "status": "in_progress",
+      "priority": "P0",
+      "workstream": "runtime",
+      "dueDate": null,
+      "blocked": false,
+      "blockerReason": null,
+      "dependencies": [
+        "Review current provider auth state",
+        "Verify fallback model behavior for cron runs"
+      ],
+      "nextAction": "Audit why cron runs reported auth and billing failures despite current model status now showing usable provider profiles.",
+      "sourceRefs": [
+        "openclaw cron list --all --json",
+        "openclaw models status --json"
+      ],
+      "description": "Recent cron failures include OpenAI Codex token refresh and Venice billing errors. Those failures need a verified runtime explanation and fix path."
+    },
+    {
+      "id": "configure-git-identity-for-backups",
+      "title": "Configure Git identity for private repo backup automation",
+      "owner": "Somwya",
+      "status": "todo",
+      "priority": "P1",
+      "workstream": "ops",
+      "dueDate": null,
+      "blocked": false,
+      "blockerReason": null,
+      "dependencies": [
+        "Confirm the intended Git author name and email for host-side backup commits"
+      ],
+      "nextAction": "Set repo or host Git identity so backup commits can run without failing on user.name / user.email.",
+      "sourceRefs": [
+        "openclaw tasks list --json"
+      ],
+      "description": "Private repo backup jobs are repeatedly failing at git commit because author identity is not configured in the execution environment."
+    },
+    {
+      "id": "ship-mission-control-skeleton",
+      "title": "Ship first Mission Control dashboard skeleton in /app/mission-control",
+      "owner": "Rohan",
+      "status": "in_progress",
+      "priority": "P0",
+      "workstream": "mission-control-ui",
+      "dueDate": null,
+      "blocked": false,
+      "blockerReason": null,
+      "dependencies": [
+        "Use real OpenClaw sources for runtime panels",
+        "Keep execution planning data separate from telemetry"
+      ],
+      "nextAction": "Complete shell, Command, Briefing, Build Lab, and Runtime modules with truthful source states and maintainable service boundaries.",
+      "sourceRefs": [
+        "Brendan request 2026-04-03 07:44 PDT"
+      ],
+      "description": "Current request: build the first production-ready Mission Control skeleton for engineering execution and OpenClaw runtime visibility."
+    },
+    {
+      "id": "wire-lobster-monitor-history",
+      "title": "Expand Lobster / TaskFlow visibility once a live history source is verified",
+      "owner": "Roy",
+      "status": "blocked",
+      "priority": "P1",
+      "workstream": "runtime",
+      "dueDate": null,
+      "blocked": true,
+      "blockerReason": "Current `openclaw tasks flow list --json` source returns zero flows; no separate Lobster history source has been verified yet.",
+      "dependencies": [
+        "Find a verified Lobster run history source beyond the current empty TaskFlow list"
+      ],
+      "nextAction": "Verify whether Lobster history should come from TaskFlow, another OpenClaw command, or a runtime state file before expanding the monitor.",
+      "sourceRefs": [
+        "openclaw tasks flow list --json"
+      ],
+      "description": "The runtime shell can render a truthful empty state now, but deeper Lobster history should not be fabricated until a real source is connected."
+    }
+  ]
+}
