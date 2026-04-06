@@ -12,24 +12,93 @@ export type SelectOption = {
   value: string;
 };
 
-export type ExecutionOwner = "Brendan" | "Rohan" | "Roy" | "Somwya" | "Jarvis";
-export type ExecutionStatus = "todo" | "in_progress" | "blocked" | "done";
-export type ExecutionPriority = "P0" | "P1" | "P2" | "P3";
+export type ProjectBoardAssigneeType =
+  | "human-authority"
+  | "ai-orchestrator"
+  | "chief"
+  | "ai-specialist"
+  | "human-collaborator";
 
-export type ExecutionTask = {
+export type ProjectBoardActorType = ProjectBoardAssigneeType | "system";
+export type ProjectBoardStatus = "intake" | "scoping" | "ready" | "active" | "review" | "shipped" | "follow-up";
+export type ProjectBoardPriority = "P0" | "P1" | "P2" | "P3";
+export type ProjectBoardSystemScope = "aries-app" | "mission-control" | "openclaw" | "operations" | "knowledge" | "runtime";
+export type ProjectBoardTaskDomain =
+  | "frontend"
+  | "backend"
+  | "runtime-automation"
+  | "operations-knowledge"
+  | "manual-ops"
+  | "mission-control"
+  | "openclaw-change";
+export type ProjectBoardExecutionMode = "standard" | "brendan-only" | "proposal-for-brendan-review";
+
+export type ProjectBoardActorRef = {
+  actorId: string;
+  actorDisplayName: string;
+  actorType: ProjectBoardActorType;
+};
+
+export type ProjectBoardNote = {
+  id: string;
+  body: string;
+  createdAt: string;
+  actorId: string;
+  actorDisplayName: string;
+};
+
+export type ProjectBoardStatusHistoryEntry = {
+  timestamp: string;
+  actorId: string;
+  actorDisplayName: string;
+  fromStatus: ProjectBoardStatus | null;
+  toStatus: ProjectBoardStatus;
+  note?: string | null;
+};
+
+export type ProjectBoardActor = {
+  id: string;
+  label: string;
+  displayName: string;
+  emoji: string;
+  assigneeType: ProjectBoardAssigneeType;
+  title: string | null;
+  department: string | null;
+  parentChiefId: string | null;
+  assignable: boolean;
+};
+
+export type ProjectBoardTask = {
   id: string;
   title: string;
-  owner: ExecutionOwner;
-  status: ExecutionStatus;
-  priority: ExecutionPriority;
+  description: string;
+  assigneeId: string;
+  assigneeType: ProjectBoardAssigneeType;
+  assigneeDisplayName: string;
+  status: ProjectBoardStatus;
+  priority: ProjectBoardPriority;
+  createdAt: string;
+  updatedAt: string;
+  deliverableLink: string | null;
+  notes: ProjectBoardNote[];
   workstream: string;
-  dueDate: string | null;
+  systemScope: ProjectBoardSystemScope;
+  taskDomain: ProjectBoardTaskDomain;
   blocked: boolean;
   blockerReason: string | null;
+  statusHistory: ProjectBoardStatusHistoryEntry[];
+  createdBy: ProjectBoardActorRef;
+  updatedBy: ProjectBoardActorRef;
+  allowedAssigneeTypes: ProjectBoardAssigneeType[];
+  allowedAssigneeIds: string[];
+  executionMode: ProjectBoardExecutionMode;
   dependencies: string[];
   nextAction: string;
   sourceRefs: string[];
-  description: string;
+  dueDate: string | null;
+  routingRule: string;
+  stale: boolean;
+  staleDays: number;
 };
 
 export type CommandLinkedRecord = {
@@ -115,11 +184,38 @@ export type CommandLoopRecord = {
   href: string;
 };
 
+export type ProjectBoardQuickView = {
+  id: string;
+  label: string;
+  count: number;
+  filters: {
+    assigneeId?: string;
+    status?: ProjectBoardStatus;
+    priority?: ProjectBoardPriority;
+    workstream?: string;
+    systemScope?: ProjectBoardSystemScope;
+    taskDomain?: ProjectBoardTaskDomain;
+    blocked?: boolean;
+    stale?: boolean;
+  };
+};
+
+export type ProjectBoardFilterOptions = {
+  assignees: SelectOption[];
+  statuses: SelectOption[];
+  priorities: SelectOption[];
+  workstreams: SelectOption[];
+  systemScopes: SelectOption[];
+  taskDomains: SelectOption[];
+};
+
 export type CommandPayload = {
   source: {
     kind: string;
     updatedAt: string;
     note: string;
+    path: string;
+    orgChartPath: string;
   };
   overview?: {
     cutoffAt: string;
@@ -132,10 +228,13 @@ export type CommandPayload = {
     attention: CommandAttentionItem[];
     loops: CommandLoopRecord[];
   };
-  tasks: ExecutionTask[];
-  owners: SelectOption[];
-  workstreams: SelectOption[];
-  views: Array<{ id: string; label: string; count: number }>;
+  tasks: ProjectBoardTask[];
+  assignees: ProjectBoardActor[];
+  actors: ProjectBoardActor[];
+  filterOptions: ProjectBoardFilterOptions;
+  quickViews: ProjectBoardQuickView[];
+  statusFlow: Array<{ id: ProjectBoardStatus; label: string }>;
+  staleAfterDays: number;
 };
 
 export type BriefType =
@@ -519,6 +618,45 @@ export type BriefingArchivePayload = {
   warnings: string[];
 };
 
+export type StandupStatus = "complete" | "partial" | "failed";
+
+export type StandupChiefRecord = {
+  chiefId: string;
+  title: string;
+  status: string;
+  agentId: string | null;
+  preview: string;
+  markdown: string;
+};
+
+export type StandupRecord = {
+  id: string;
+  title: string;
+  date: string;
+  path: string;
+  updatedAt: string;
+  generatedAt: string;
+  status: StandupStatus;
+  preview: string;
+  markdown: string;
+  audioPath: string | null;
+  delivery: string;
+  boardPath: string;
+  chiefs: StandupChiefRecord[];
+};
+
+export type StandupArchivePayload = {
+  items: StandupRecord[];
+  warnings: string[];
+  summary: {
+    latestId: string | null;
+    total: number;
+    complete: number;
+    partial: number;
+    failed: number;
+  };
+};
+
 export type SkillSource = "Bundled" | "Local" | "Workspace";
 
 export type SkillReference = {
@@ -598,4 +736,104 @@ export type OrgPlannerNotes = {
   repetitiveTasks: string;
   humanVsAgent: string;
   modelGaps: string;
+};
+
+export type OrgPresenceStatus = "online" | "offline" | "unavailable";
+export type OrgMemberKind = "ai" | "human";
+export type OrgActivityKind = "session" | "board" | "standup" | "human";
+
+export type OrgActivityItem = {
+  id: string;
+  kind: OrgActivityKind;
+  timestamp: string | null;
+  detail: string;
+  href: string;
+  source: string;
+};
+
+export type OrgRuntimeState = {
+  agentId: string | null;
+  registered: boolean;
+  status: OrgPresenceStatus;
+  lastSeen: string | null;
+  currentModel: string | null;
+  modelSource: "active-session" | "configured-agent" | "default-config" | "unavailable";
+  statusSource: "session-evidence" | "no-session-evidence" | "runtime-unavailable";
+  detail: string;
+};
+
+export type OrgBoardLoad = {
+  total: number;
+  open: number;
+  blocked: number;
+  active: number;
+  ready: number;
+  review: number;
+  shipped: number;
+  completionRate: number | null;
+  latestUpdatedAt: string | null;
+};
+
+export type OrgStandupState = {
+  latestStandupId: string | null;
+  latestStandupDate: string | null;
+  latestStandupStatus: StandupStatus | null;
+  latestChiefStatus: string | null;
+  latestMention: string | null;
+  latestTranscriptPath: string | null;
+};
+
+export type OrgMemberRecord = {
+  id: string;
+  name: string;
+  title: string;
+  department: string;
+  emoji: string;
+  memberKind: OrgMemberKind;
+  isChief: boolean;
+  roleSummary: string;
+  runtime: OrgRuntimeState | null;
+  board: OrgBoardLoad;
+  standup: OrgStandupState;
+  recentActivity: OrgActivityItem[];
+  recentActivitySummary: string;
+  humanActivitySummary: string | null;
+};
+
+export type OrgLatestStandupSummary = {
+  id: string | null;
+  title: string | null;
+  date: string | null;
+  status: StandupStatus | null;
+  path: string | null;
+  preview: string | null;
+  respondingChiefCount: number | null;
+  chiefCount: number | null;
+  decisions: string[];
+  delivery: string | null;
+};
+
+export type OrgPayload = {
+  source: {
+    orgChartPath: string;
+    boardPath: string;
+    standupPath: string;
+    openclawConfigPath: string | null;
+  };
+  summary: {
+    persistentAiSeats: number;
+    chiefs: {
+      total: number;
+      online: number;
+      offline: number;
+      unavailable: number;
+    };
+    humans: number;
+    openBlockerCount: number;
+    lastStandupDate: string | null;
+    lastStandupStatus: StandupStatus | null;
+    chiefResponseCount: number | null;
+  };
+  latestStandup: OrgLatestStandupSummary | null;
+  members: OrgMemberRecord[];
 };

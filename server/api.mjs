@@ -11,8 +11,11 @@ import { loadExecutionData } from "./loaders/execution-data.mjs";
 import { loadRuntimeData } from "./loaders/runtime-data.mjs";
 import { loadMemoryFileContent, loadMemoryFiles } from "./loaders/memory-data.mjs";
 import { loadBriefingArchiveData } from "./loaders/briefing-archive-data.mjs";
+import { loadStandupArchiveData } from "./loaders/standup-data.mjs";
 import { loadSkillsCatalogData } from "./loaders/skills-data.mjs";
 import { loadCronHealthData } from "./loaders/cron-health-data.mjs";
+import { loadOrgData } from "./loaders/org-data.mjs";
+import { loadProjectBoardPayload } from "./lib/project-board.mjs";
 import { toIso } from "./lib/fs-utils.mjs";
 
 export class ApiError extends Error {
@@ -32,6 +35,9 @@ function isMemoryAllowed(rawPath) {
 export async function loadApiPath(pathname, url) {
   if (pathname === "/api/app/command") {
     return { generatedAt: toIso(Date.now()), data: await loadExecutionData() };
+  }
+  if (pathname === "/api/pm-board") {
+    return { generatedAt: toIso(Date.now()), data: await loadProjectBoardPayload() };
   }
   if (pathname === "/api/app/briefing") {
     return { generatedAt: toIso(Date.now()), data: await loadBriefingData() };
@@ -56,6 +62,10 @@ export async function loadApiPath(pathname, url) {
   }
   if (pathname === "/api/app/runtime") {
     return { generatedAt: toIso(Date.now()), data: await loadRuntimeData() };
+  }
+
+  if (pathname === "/api/org") {
+    return { generatedAt: toIso(Date.now()), data: await loadOrgData() };
   }
 
   if (pathname === "/api/memory/files") {
@@ -86,6 +96,10 @@ export async function loadApiPath(pathname, url) {
 
   if (pathname === "/api/briefs") {
     return { generatedAt: toIso(Date.now()), data: await loadBriefingArchiveData() };
+  }
+
+  if (pathname === "/api/standups") {
+    return { generatedAt: toIso(Date.now()), data: await loadStandupArchiveData() };
   }
 
   if (pathname === "/api/skills") {

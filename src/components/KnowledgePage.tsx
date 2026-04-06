@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { usePollingResource } from "../hooks/usePollingResource";
+import { StandupsPanel } from "./StandupsPanel";
 import type {
   ApiEnvelope,
   BriefingArchivePayload,
@@ -11,9 +12,12 @@ import type {
   MemoryFilePayload,
   SkillCatalogPayload,
   SkillCatalogRecord,
+  StandupArchivePayload,
+  StandupRecord,
+  OrgPayload,
 } from "../types";
 
-type TabKey = "overview" | "memory" | "briefing" | "skills" | "scheduler";
+type TabKey = "overview" | "memory" | "briefing" | "standups" | "skills" | "scheduler";
 
 type SourceFilter =
   | { kind: "all" }
@@ -25,6 +29,7 @@ const tabMeta: Array<{ id: TabKey; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "memory", label: "Memory Explorer" },
   { id: "briefing", label: "Briefing Archive" },
+  { id: "standups", label: "Standups" },
   { id: "skills", label: "Skills Catalog" },
   { id: "scheduler", label: "Scheduler Health" },
 ];
@@ -56,12 +61,21 @@ function updateTab(setTab: (next: TabKey) => void, nextTab: TabKey) {
   setTab(nextTab);
 }
 
-export function KnowledgePage() {
+export function KnowledgePage({
+  org,
+}: {
+  org: {
+    data: ApiEnvelope<OrgPayload> | null;
+    loading: boolean;
+    error: string | null;
+  };
+}) {
   const memoryFiles = usePollingResource<ApiEnvelope<MemoryFilePayload>>({ load: api.loadMemoryFiles, intervalMs: 30000 });
   const briefingArchive = usePollingResource<ApiEnvelope<BriefingArchivePayload>>({
     load: api.loadBriefingArchive,
     intervalMs: 30000,
   });
+  const standups = usePollingResource<ApiEnvelope<StandupArchivePayload>>({ load: api.loadStandups, intervalMs: 30000 });
   const skillCatalog = usePollingResource<ApiEnvelope<SkillCatalogPayload>>({ load: api.loadSkills, intervalMs: 30000 });
   const cronHealth = usePollingResource<ApiEnvelope<CronHealthPayload>>({ load: api.loadCronHealth, intervalMs: 30000 });
 
@@ -72,10 +86,13 @@ export function KnowledgePage() {
   const [selectedMemoryError, setSelectedMemoryError] = useState<string | null>(null);
   const [selectedBriefId, setSelectedBriefId] = useState<string | null>(null);
   const [selectedBrief, setSelectedBrief] = useState<BriefingArchiveRecord | null>(null);
+  const [selectedStandupId, setSelectedStandupId] = useState<string | null>(null);
+  const [selectedStandup, setSelectedStandup] = useState<StandupRecord | null>(null);
   const [skillTab, setSkillTab] = useState("all");
 
   const memoryData = memoryFiles.data?.data;
   const briefingData = briefingArchive.data?.data;
+  const standupData = standups.data?.data;
   const skillData = skillCatalog.data?.data;
   const cronData = cronHealth.data?.data;
 
@@ -151,6 +168,31 @@ export function KnowledgePage() {
     setSelectedBrief(items.find((item) => item.id === selectedBriefId) ?? null);
   }, [selectedBriefId, briefingData]);
 
+  useEffect(() => {
+    const items = standupData?.items ?? [];
+    if (!items.length) {
+      setSelectedStandupId(null);
+      setSelectedStandup(null);
+      return;
+    }
+
+    setSelectedStandupId((current) => {
+      const same = items.find((item) => item.id === current);
+      if (same) return current;
+      setSelectedStandup(items[0]);
+      return items[0].id;
+    });
+  }, [standupData]);
+
+  useEffect(() => {
+    const items = standupData?.items ?? [];
+    if (!selectedStandupId || !items.length) {
+      if (!items.length) setSelectedStandup(null);
+      return;
+    }
+    setSelectedStandup(items.find((item) => item.id === selectedStandupId) ?? null);
+  }, [selectedStandupId, standupData]);
+
   const skillTabs = useMemo(() => {
     const base = [
       { key: "all", label: "All" },
@@ -186,6 +228,7 @@ export function KnowledgePage() {
 
   const overview = useMemo(() => {
     const files = memoryData?.files ?? [];
+    const orgData = org.data?.data;
     const totalSize = files.reduce((total, file) => total + file.sizeBytes, 0);
     const lastUpdated = files[0]?.updatedAt || null;
     const latestBrief = (briefingData?.items ?? []).find((item) => item.type === "brief") || briefingData?.items?.[0] || null;
@@ -197,6 +240,13 @@ export function KnowledgePage() {
 
     return {
       latestBrief,
+      standups: {
+        total: standupData?.summary?.total ?? 0,
+        complete: standupData?.summary?.complete ?? 0,
+        partial: standupData?.summary?.partial ?? 0,
+        failed: standupData?.summary?.failed ?? 0,
+        latest: standupData?.items?.[0] || null,
+      },
       memory: {
         fileCount: files.length,
         totalSize,
@@ -206,9 +256,11 @@ export function KnowledgePage() {
         total: skillData?.records?.length ?? 0,
         ...sourceBreakdown,
       },
+      teamHealth: orgData?.summary || null,
+      latestStandupSummary: orgData?.latestStandup || null,
       scheduler: cronData?.stats ?? { healthy: 0, failed: 0, disabled: 0, unavailable: 0, disconnected: 0 },
     };
-  }, [briefingData?.items, cronData?.stats, memoryData?.files, skillData?.records]);
+  }, [briefingData?.items, cronData?.stats, memoryData?.files, org.data?.data, skillData?.records, standupData]);
 
   const activeSection = (() => {
     if (activeTab === "memory") {
@@ -239,6 +291,19 @@ export function KnowledgePage() {
       );
     }
 
+    if (activeTab === "standups") {
+      return (
+        <StandupsPanel
+          state={standups}
+          data={standupData}
+          selectedId={selectedStandupId}
+          selectedRecord={selectedStandup}
+          onSelect={setSelectedStandupId}
+          onBack={() => updateTab(setActiveTab, "overview")}
+        />
+      );
+    }
+
     if (activeTab === "skills") {
       return (
         <SkillsCatalogPanel
@@ -262,8 +327,10 @@ export function KnowledgePage() {
         overview={overview}
         memoryState={memoryFiles}
         briefingState={briefingArchive}
+        standupState={standups}
         skillState={skillCatalog}
         cronState={cronHealth}
+        orgState={org}
         onOpen={(tab) => updateTab(setActiveTab, tab)}
       />
     );
@@ -280,6 +347,7 @@ export function KnowledgePage() {
         <div className="stats-grid compact-stats">
           <StatusCard label="Memory files" value={(memoryData?.files?.length ?? 0).toString()} />
           <StatusCard label="Briefing records" value={(briefingData?.items?.length ?? 0).toString()} />
+          <StatusCard label="Standups" value={(standupData?.summary?.total ?? 0).toString()} />
           <StatusCard label="Skills" value={(skillData?.records?.length ?? 0).toString()} />
         </div>
       </header>
@@ -308,20 +376,31 @@ function KnowledgeOverviewPanel({
   overview,
   memoryState,
   briefingState,
+  standupState,
   skillState,
   cronState,
+  orgState,
   onOpen,
 }: {
   overview: {
     latestBrief: BriefingArchiveRecord | null;
+    standups: { total: number; complete: number; partial: number; failed: number; latest: StandupRecord | null };
     memory: { fileCount: number; totalSize: number; lastUpdated: string | null };
     skills: { total: number; Bundled: number; Local: number; Workspace: number };
+    teamHealth: OrgPayload["summary"] | null;
+    latestStandupSummary: OrgPayload["latestStandup"] | null;
     scheduler: { healthy: number; failed: number; disabled: number; unavailable: number; disconnected: number };
   };
   memoryState: ReturnType<typeof usePollingResource<ApiEnvelope<MemoryFilePayload>>>;
   briefingState: ReturnType<typeof usePollingResource<ApiEnvelope<BriefingArchivePayload>>>;
+  standupState: ReturnType<typeof usePollingResource<ApiEnvelope<StandupArchivePayload>>>;
   skillState: ReturnType<typeof usePollingResource<ApiEnvelope<SkillCatalogPayload>>>;
   cronState: ReturnType<typeof usePollingResource<ApiEnvelope<CronHealthPayload>>>;
+  orgState: {
+    data: ApiEnvelope<OrgPayload> | null;
+    loading: boolean;
+    error: string | null;
+  };
   onOpen: (tab: TabKey) => void;
 }) {
   return (
@@ -353,6 +432,46 @@ function KnowledgeOverviewPanel({
           onOpen={() => onOpen("briefing")}
         />
         <KnowledgeOverviewTile
+          title="Team Health"
+          subtitle={overview.teamHealth
+            ? `${overview.teamHealth.chiefs.online} online • ${overview.teamHealth.chiefs.offline} offline • ${overview.teamHealth.chiefs.unavailable} unavailable`
+            : "Unavailable"}
+          detail={overview.teamHealth
+            ? `Last standup ${overview.teamHealth.lastStandupStatus || "Unavailable"} • chief responses ${overview.teamHealth.chiefResponseCount ?? "Unavailable"} • open blockers ${overview.teamHealth.openBlockerCount}`
+            : "Team health could not be loaded from the live org surface."}
+          meta={overview.teamHealth
+            ? [
+                `Standup ${overview.teamHealth.lastStandupDate || "Unavailable"}`,
+                `Blockers ${overview.teamHealth.openBlockerCount}`,
+                `Humans ${overview.teamHealth.humans}`,
+              ]
+            : [resourceStateLabel(orgState.loading, orgState.error)]}
+          endpoint="/api/org"
+          state={resourceStateLabel(orgState.loading, orgState.error)}
+          href="/#/org-chart"
+          onOpen={() => {
+            window.location.assign("/#/org-chart");
+          }}
+        />
+        <KnowledgeOverviewTile
+          title="Last Standup"
+          subtitle={overview.latestStandupSummary?.title || "No saved transcript"}
+          detail={overview.latestStandupSummary
+            ? `${overview.latestStandupSummary.respondingChiefCount ?? 0}/${overview.latestStandupSummary.chiefCount ?? 0} chiefs responded • ${overview.latestStandupSummary.preview || "Preview unavailable"}`
+            : "No standup transcript was found in team/meetings."}
+          meta={overview.latestStandupSummary
+            ? [
+                overview.latestStandupSummary.date || "Date unavailable",
+                overview.latestStandupSummary.status || "Status unavailable",
+                ...(overview.latestStandupSummary.decisions?.length ? overview.latestStandupSummary.decisions.slice(0, 2) : ["Key decisions unavailable"]),
+              ]
+            : [resourceStateLabel(standupState.loading, standupState.error)]}
+          endpoint="/api/org"
+          state={resourceStateLabel(orgState.loading, orgState.error)}
+          href={tabHref("standups")}
+          onOpen={() => onOpen("standups")}
+        />
+        <KnowledgeOverviewTile
           title="Memory Stats"
           subtitle={`${overview.memory.fileCount} files • ${formatBytes(overview.memory.totalSize)}`}
           detail={overview.memory.lastUpdated ? `Last updated ${formatDate(overview.memory.lastUpdated)}` : "No memory files available."}
@@ -364,6 +483,20 @@ function KnowledgeOverviewPanel({
           state={resourceStateLabel(memoryState.loading, memoryState.error)}
           href={tabHref("memory")}
           onOpen={() => onOpen("memory")}
+        />
+        <KnowledgeOverviewTile
+          title="Standups"
+          subtitle={overview.standups.latest?.title || `${overview.standups.total} saved transcripts`}
+          detail={overview.standups.latest?.preview || "No standup transcripts available yet."}
+          meta={[
+            `Complete ${overview.standups.complete}`,
+            `Partial ${overview.standups.partial}`,
+            `Failed ${overview.standups.failed}`,
+          ]}
+          endpoint="/api/standups"
+          state={resourceStateLabel(standupState.loading, standupState.error)}
+          href={tabHref("standups")}
+          onOpen={() => onOpen("standups")}
         />
         <KnowledgeOverviewTile
           title="Scheduler Health"

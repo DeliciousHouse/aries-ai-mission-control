@@ -3,7 +3,15 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ApiError, loadApiPath } from "./api.mjs";
+import {
+  boardErrorPayload,
+  createProjectBoardTask,
+  isBoardRequestPath,
+  readJsonBody,
+  updateProjectBoardTask,
+} from "./lib/project-board.mjs";
 import { isAllowedBuildLabFile, loadBuildLabFile } from "./loaders/build-lab-data.mjs";
+import { isAllowedStandupFile, loadStandupFile } from "./loaders/standup-data.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,12 +42,52 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || `${host}:${port}`}`);
 
+    if (isBoardRequestPath(url.pathname) && req.method === "POST" && url.pathname === "/api/pm-board") {
+      const body = await readJsonBody(req);
+      const data = await createProjectBoardTask(body);
+      res.writeHead(201, {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+      });
+      res.end(JSON.stringify({ data }));
+      return;
+    }
+
+    if (isBoardRequestPath(url.pathname) && req.method === "PATCH") {
+      const taskId = url.pathname.replace(/^\/api\/pm-board\//, "").trim();
+      if (!taskId) {
+        throw new ApiError("Task id is required for PATCH /api/pm-board/:id.", 400);
+      }
+      const body = await readJsonBody(req);
+      const data = await updateProjectBoardTask(taskId, body);
+      res.writeHead(200, {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+      });
+      res.end(JSON.stringify({ data }));
+      return;
+    }
+
     if (url.pathname === "/api/app/build-lab/file") {
       const pathParam = url.searchParams.get("path") || "";
       if (!isAllowedBuildLabFile(pathParam)) {
         throw new ApiError("Invalid Build Lab file path.", 400);
       }
       const { content, contentType } = await loadBuildLabFile(pathParam);
+      res.writeHead(200, {
+        "Content-Type": contentType,
+        "Cache-Control": "no-store",
+      });
+      res.end(content);
+      return;
+    }
+
+    if (url.pathname === "/api/standups/file") {
+      const pathParam = url.searchParams.get("path") || "";
+      if (!isAllowedStandupFile(pathParam)) {
+        throw new ApiError("Invalid standup file path.", 400);
+      }
+      const { content, contentType } = await loadStandupFile(pathParam);
       res.writeHead(200, {
         "Content-Type": contentType,
         "Cache-Control": "no-store",
@@ -77,6 +125,14 @@ const server = http.createServer(async (req, res) => {
     if (error instanceof ApiError) {
       res.writeHead(error.status, { "Content-Type": "application/json; charset=utf-8" });
       res.end(JSON.stringify({ error: error.message }));
+      return;
+    }
+
+    if (error?.name === "ValidationError" || error?.name === "NotFoundError") {
+      res.writeHead(error.status || (error.name === "NotFoundError" ? 404 : 400), {
+        "Content-Type": "application/json; charset=utf-8",
+      });
+      res.end(JSON.stringify(boardErrorPayload(error)));
       return;
     }
 

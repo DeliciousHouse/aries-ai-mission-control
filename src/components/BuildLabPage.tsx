@@ -160,6 +160,16 @@ export function BuildLabPage({ payload }: { payload: BuildLabPayload }) {
 
 function OverviewSection({ payload, onSelect }: { payload: BuildLabPayload; onSelect: (section: BuildLabSection) => void }) {
   const { ideas, prototypes, artifacts, research } = payload.overview.tiles;
+  const ownershipSummary = Object.entries(
+    payload.prototypes.items.reduce<Record<string, number>>((accumulator, item) => {
+      const owner = item.owner?.trim();
+      if (!owner || owner.toLowerCase() === "unassigned") return accumulator;
+      accumulator[owner] = (accumulator[owner] || 0) + 1;
+      return accumulator;
+    }, {}),
+  )
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, 3);
 
   return (
     <div className="page-stack">
@@ -214,6 +224,14 @@ function OverviewSection({ payload, onSelect }: { payload: BuildLabPayload; onSe
             footer={research.latestDate ? `Updated ${formatDate(research.latestDate)}` : "No recent research file found."}
             href={sectionHref("research")}
             onOpen={() => onSelect("research")}
+          />
+          <OverviewTile
+            title="Ownership Summary"
+            subtitle={ownershipSummary.length ? `${ownershipSummary.length} tracked owners` : "Ownership unavailable"}
+            lines={ownershipSummary.length ? ownershipSummary.map(([owner, count]) => `${owner}: ${count}`) : ["No real owner field is present on current prototype tracks."]}
+            footer="Sourced only from tracked prototype / experiment owners."
+            href={sectionHref("prototypes")}
+            onOpen={() => onSelect("prototypes")}
           />
         </div>
       </section>

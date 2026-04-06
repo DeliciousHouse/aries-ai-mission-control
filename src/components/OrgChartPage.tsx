@@ -1,612 +1,451 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  noteTemplates,
-  opsPlaceholders,
-  roleTemplates,
-  worksheetSections,
-} from "../lib/orgDesign";
-import type { OrgDepartment, OrgNode, OrgPlannerNotes } from "../types";
+import { formatDate } from "../lib/format";
+import { orgMemberHref, readOrgMemberFromLocation, replaceOrgMemberInLocation } from "../lib/orgLinks";
+import type { OrgActivityItem, OrgMemberRecord, OrgPayload } from "../types";
 
-const WORKSPACE_STORAGE_KEY = "aries.mission-control.org-chart.episode-3.v1";
-
-const topOrchestrator: OrgNode = {
-  id: "jarvis-mission-control",
-  name: "Jarvis",
-  title: "Mission Control",
-  responsibility: "Owns decomposition, routing, blocker visibility, synthesis, and bounded direct execution when that is the fastest honest path to shipping aries-app.",
-  actorType: "AI",
-  executionMode: "Coordination",
-};
-
-const departments: OrgDepartment[] = [
-  {
-    id: "engineering-delivery",
-    name: "Engineering Delivery",
-    summary: "Ships aries-app through explicit frontend/backend lanes plus bounded direct execution from Jarvis where helpful.",
-    accent: "ops",
-    head: {
-      id: "jarvis-builder",
-      name: "Jarvis",
-      title: "Builder / Direct Implementation",
-      responsibility: "Picks up bounded implementation work directly when it reduces ambiguity or keeps the delivery loop moving.",
-      actorType: "AI",
-      executionMode: "Direct Execution",
-    },
-    specialists: [
-      {
-        id: "rohan-frontend",
-        name: "Rohan",
-        title: "Frontend Owner",
-        responsibility: "Owns UI, layout, client-side behavior, and frontend integration surfaces.",
-        actorType: "Human",
-        executionMode: "Direct Execution",
-      },
-      {
-        id: "roy-backend",
-        name: "Roy",
-        title: "Backend Owner",
-        responsibility: "Owns APIs, backend logic, integrations, workflows, and data correctness.",
-        actorType: "Human",
-        executionMode: "Direct Execution",
-      },
-      {
-        id: "tbd-release-readiness",
-        name: "TBD",
-        title: "Release Readiness / QA",
-        responsibility: "Covers cross-surface verification, handoff proof, and release checks when the org is ready for a dedicated seat.",
-        actorType: "TBD",
-        executionMode: "Direct Execution",
-      },
-    ],
-  },
-  {
-    id: "runtime-automation",
-    name: "Runtime & Automation",
-    summary: "Keeps OpenClaw observability, scheduler integrity, and flow health visible enough to trust operationally.",
-    accent: "brain",
-    head: {
-      id: "tbd-runtime-lead",
-      name: "TBD",
-      title: "Runtime & Automation Lead",
-      responsibility: "Owns the operating loop around runtime truth, cron failures, flow oversight, and model/provider visibility.",
-      actorType: "TBD",
-      executionMode: "Coordination",
-    },
-    specialists: [
-      {
-        id: "jarvis-runtime",
-        name: "Jarvis",
-        title: "Runtime Visibility Steward",
-        responsibility: "Keeps live state truthful and calls out missing wiring rather than smoothing it over.",
-        actorType: "AI",
-        executionMode: "Coordination",
-      },
-      {
-        id: "tbd-cron-monitor",
-        name: "TBD",
-        title: "Cron / Scheduler Monitor",
-        responsibility: "Owns recurring job integrity, failure detection, and drift cleanup.",
-        actorType: "TBD",
-        executionMode: "Coordination",
-      },
-      {
-        id: "tbd-flow-steward",
-        name: "TBD",
-        title: "Lobster / Flow Steward",
-        responsibility: "Tracks long-running workflows, repair loops, and automation ownership.",
-        actorType: "TBD",
-        executionMode: "Direct Execution",
-      },
-    ],
-  },
-  {
-    id: "operations-knowledge",
-    name: "Operations & Knowledge",
-    summary: "Holds the human-required checks, note hygiene, and planning continuity that stop execution from stalling.",
-    accent: "lab",
-    head: {
-      id: "somwya-human-ops",
-      name: "Somwya",
-      title: "Human Ops / Manual Execution",
-      responsibility: "Owns manual verification, account checks, and other non-coding work that cannot be truthfully automated away.",
-      actorType: "Human",
-      executionMode: "Manual",
-    },
-    specialists: [
-      {
-        id: "tbd-briefing-steward",
-        name: "TBD",
-        title: "Briefing / Knowledge Steward",
-        responsibility: "Compresses notes, decisions, and operating context into something usable during execution.",
-        actorType: "TBD",
-        executionMode: "Coordination",
-      },
-      {
-        id: "tbd-handoff-verifier",
-        name: "TBD",
-        title: "QA / Handoff Validator",
-        responsibility: "Confirms work is actually ready for the next owner before anyone calls it done.",
-        actorType: "TBD",
-        executionMode: "Manual",
-      },
-      {
-        id: "tbd-approval-followthrough",
-        name: "TBD",
-        title: "Approval / Follow-through",
-        responsibility: "Makes sure manual approvals and human-only dependencies do not disappear between sessions.",
-        actorType: "TBD",
-        executionMode: "Manual",
-      },
-    ],
-  },
-];
-
-const defaultNotes: OrgPlannerNotes = {
-  agentIdeas: "",
-  missingRoles: "",
-  repetitiveTasks: "",
-  humanVsAgent: "",
-  modelGaps: "",
-};
-
-const docPaths = [
-  "docs/plans/episode-3-org-role-template.md",
-  "docs/plans/episode-3-org-design-decision-template.md",
-  "docs/plans/episode-3-role-boundary-template.md",
-  "docs/plans/episode-3-delegation-tradeoff-template.md",
-  "docs/plans/episode-3-command-ops-registers.md",
-  "docs/plans/episode-3-workload-worksheet.md",
-];
-
-type WorkspaceState = {
-  notes: OrgPlannerNotes;
-  worksheet: Record<string, string>;
-};
-
-function buildDefaultWorksheet() {
-  return Object.fromEntries(worksheetSections.map((section) => [section.id, ""]));
+function presenceClass(status: string | null | undefined) {
+  if (status === "online") return "status-connected";
+  if (status === "offline") return "status-failed";
+  return "status-unavailable";
 }
 
-export function OrgChartPage() {
-  const [notes, setNotes] = useState<OrgPlannerNotes>(defaultNotes);
-  const [worksheet, setWorksheet] = useState<Record<string, string>>(buildDefaultWorksheet());
-  const [isHydrated, setIsHydrated] = useState(false);
+function presenceLabel(status: string | null | undefined) {
+  if (status === "online") return "Online";
+  if (status === "offline") return "Offline";
+  return "Unavailable";
+}
+
+function departmentTone(member: OrgMemberRecord) {
+  if (member.id === "jarvis") return "tone-jarvis";
+  if (member.id === "forge") return "tone-forge";
+  if (member.id === "signal") return "tone-signal";
+  if (member.id === "ledger") return "tone-ledger";
+  return "tone-neutral";
+}
+
+function formatMaybeDate(value: string | null | undefined) {
+  return value ? formatDate(value) : "Unavailable";
+}
+
+function modelLabel(member: OrgMemberRecord) {
+  return member.runtime?.currentModel || "Unavailable";
+}
+
+function statusLabel(value: string) {
+  return value.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function boardLoadLabel(member: OrgMemberRecord) {
+  if (!member.board.total) return "No board load";
+  return `${member.board.open} open • ${member.board.blocked} blocked`;
+}
+
+function summaryBadgeClass(status: string | null | undefined) {
+  if (status === "complete") return "status-done";
+  if (status === "failed") return "status-failed";
+  if (status === "partial") return "status-unavailable";
+  return "status-unavailable";
+}
+
+export function OrgChartPage({ payload }: { payload: OrgPayload }) {
+  const aiMembers = useMemo(() => payload.members.filter((member) => member.memberKind === "ai"), [payload.members]);
+  const humanMembers = useMemo(() => payload.members.filter((member) => member.memberKind === "human"), [payload.members]);
+  const defaultMemberId = aiMembers[0]?.id || humanMembers[0]?.id || null;
+  const [selectedId, setSelectedId] = useState<string | null>(() => readOrgMemberFromLocation() || defaultMemberId);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
-      if (!raw) {
-        setIsHydrated(true);
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as Partial<WorkspaceState>;
-      setNotes({
-        agentIdeas: parsed.notes?.agentIdeas ?? "",
-        missingRoles: parsed.notes?.missingRoles ?? "",
-        repetitiveTasks: parsed.notes?.repetitiveTasks ?? "",
-        humanVsAgent: parsed.notes?.humanVsAgent ?? "",
-        modelGaps: parsed.notes?.modelGaps ?? "",
-      });
-      setWorksheet({ ...buildDefaultWorksheet(), ...(parsed.worksheet ?? {}) });
-    } catch {
-      setNotes(defaultNotes);
-      setWorksheet(buildDefaultWorksheet());
-    } finally {
-      setIsHydrated(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    const payload: WorkspaceState = { notes, worksheet };
-    window.localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(payload));
-  }, [isHydrated, notes, worksheet]);
-
-  const summary = useMemo(() => {
-    const allNodes = [topOrchestrator, ...departments.flatMap((department) => [department.head, ...department.specialists])];
-    const filled = allNodes.filter((node) => node.name !== "TBD").length;
-    const tbd = allNodes.filter((node) => node.name === "TBD").length;
-    const directExecution = allNodes.filter((node) => node.executionMode === "Direct Execution").length;
-    const automatedFriendly = roleTemplates.filter((template) => template.seatType === "AI" || template.seatType === "Hybrid").length;
-
-    return {
-      totalSeats: allNodes.length,
-      filled,
-      tbd,
-      directExecution,
-      automatedFriendly,
+    const syncFromLocation = () => {
+      const next = readOrgMemberFromLocation() || defaultMemberId;
+      setSelectedId(next);
     };
-  }, []);
 
-  function updateNote(field: keyof OrgPlannerNotes, value: string) {
-    setNotes((current) => ({ ...current, [field]: value }));
-  }
+    window.addEventListener("popstate", syncFromLocation);
+    window.addEventListener("hashchange", syncFromLocation);
+    return () => {
+      window.removeEventListener("popstate", syncFromLocation);
+      window.removeEventListener("hashchange", syncFromLocation);
+    };
+  }, [defaultMemberId]);
 
-  function updateWorksheet(id: string, value: string) {
-    setWorksheet((current) => ({ ...current, [id]: value }));
-  }
+  useEffect(() => {
+    const exists = payload.members.some((member) => member.id === selectedId);
+    if (!exists && defaultMemberId) {
+      setSelectedId(defaultMemberId);
+      replaceOrgMemberInLocation(defaultMemberId);
+      return;
+    }
 
-  function resetWorkspace() {
-    setNotes(defaultNotes);
-    setWorksheet(buildDefaultWorksheet());
-    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
-  }
+    if (exists && selectedId) {
+      replaceOrgMemberInLocation(selectedId);
+    }
+  }, [defaultMemberId, payload.members, selectedId]);
+
+  const selectedMember = payload.members.find((member) => member.id === selectedId) || payload.members[0] || null;
 
   return (
-    <section className="page-stack">
-      <header className="page-header panel org-page-header">
+    <section className="page-stack accent-brain">
+      <header className="page-header panel org-live-header">
         <div>
-          <p className="eyebrow">Episode 3</p>
-          <h2>Org design workspace for internal engineering execution</h2>
+          <p className="eyebrow">Org Chart</p>
+          <h2>Live team state for Mission Control</h2>
           <p className="muted">
-            Built for shipping <code>aries-app</code>, operating OpenClaw Mission Control, and deciding what Jarvis should execute directly versus delegate.
+            AI runtime state is sourced from real OpenClaw registration + session evidence. Human collaborators are shown from role, board,
+            and standup evidence only. If a source is missing, this surface says unavailable instead of guessing.
           </p>
         </div>
         <div className="stats-grid compact-stats">
           <div className="stat-card">
-            <span>Seats mapped</span>
-            <strong>{summary.totalSeats}</strong>
+            <span>Persistent AI seats</span>
+            <strong>{payload.summary.persistentAiSeats}</strong>
           </div>
           <div className="stat-card success">
-            <span>Known roles</span>
-            <strong>{summary.filled}</strong>
+            <span>Chiefs online</span>
+            <strong>{payload.summary.chiefs.online}</strong>
+          </div>
+          <div className="stat-card danger">
+            <span>Chiefs offline</span>
+            <strong>{payload.summary.chiefs.offline}</strong>
           </div>
           <div className="stat-card warning">
-            <span>TBD seats</span>
-            <strong>{summary.tbd}</strong>
-          </div>
-          <div className="stat-card">
-            <span>AI / hybrid templates</span>
-            <strong>{summary.automatedFriendly}</strong>
+            <span>Chiefs unavailable</span>
+            <strong>{payload.summary.chiefs.unavailable}</strong>
           </div>
         </div>
       </header>
 
-      <section className="panel org-governance-panel">
-        <div className="section-split">
-          <div>
-            <p className="eyebrow">Authority + use</p>
-            <h3>Brendan stays above the org design workspace</h3>
+      <section className="panel org-live-summary-panel">
+        <div className="overview-tile-grid">
+          <article className="list-card overview-card">
+            <div className="section-split">
+              <div>
+                <p className="eyebrow">Team Health</p>
+                <h3>
+                  {payload.summary.chiefs.online} online • {payload.summary.chiefs.offline} offline • {payload.summary.chiefs.unavailable} unavailable
+                </h3>
+              </div>
+              <code>/api/org</code>
+            </div>
+            <p className="muted">Chief runtime presence is derived from real OpenClaw session evidence and heartbeat cadence when configured.</p>
+            <ul className="inline-list with-spacing">
+              <li>Open blockers {payload.summary.openBlockerCount}</li>
+              <li>Humans tracked {payload.summary.humans}</li>
+              <li>Standup {payload.summary.lastStandupStatus || "Unavailable"}</li>
+            </ul>
+          </article>
+
+          <article className="list-card overview-card">
+            <div className="section-split">
+              <div>
+                <p className="eyebrow">Last Standup</p>
+                <h3>{payload.latestStandup?.title || "No saved transcript"}</h3>
+              </div>
+              <span className={`badge ${payload.latestStandup ? summaryBadgeClass(payload.latestStandup.status) : "status-unavailable"}`}>
+                {payload.latestStandup?.status || "Unavailable"}
+              </span>
+            </div>
             <p className="muted">
-              This package is for internal execution planning only. It helps you decide how work should flow across Brendan, Jarvis, Rohan, Roy, Somwya, and any future specialist seats.
+              {payload.latestStandup
+                ? `${payload.latestStandup.respondingChiefCount ?? 0}/${payload.latestStandup.chiefCount ?? 0} chiefs responded • ${payload.latestStandup.preview || "Preview unavailable"}`
+                : "No standup transcript was found in team/meetings."}
             </p>
-          </div>
-          <div className="decision-maker-badge">
-            <strong>Brendan</strong>
-            <span>Final decision-maker / Head of Software Engineering</span>
-          </div>
+            <ul className="inline-list with-spacing">
+              <li>{payload.latestStandup?.date || "Date unavailable"}</li>
+              <li>{payload.latestStandup?.path || "Path unavailable"}</li>
+              <li>{payload.latestStandup?.delivery || "Delivery unavailable"}</li>
+            </ul>
+            <a className="secondary-button overview-link-button" href="/?knowledgeView=standups#/knowledge">
+              Open standup detail
+            </a>
+          </article>
         </div>
       </section>
 
-      <div className="org-main-grid">
-        <section className="panel org-chart-panel">
+      <div className="org-live-layout">
+        <section className="panel page-stack">
           <div className="section-split">
             <div>
-              <p className="eyebrow">Current operating model</p>
-              <h3>Mission Control + execution starter map</h3>
-              <p className="muted">A practical starting point, not decorative org art.</p>
+              <p className="eyebrow">AI team</p>
+              <h3>Jarvis + registered chief seats</h3>
+              <p className="muted">Click a member to open the live detail panel.</p>
             </div>
-            <span className="badge neutral">Internal only</span>
+            <code>{payload.source.openclawConfigPath || "OpenClaw config unavailable"}</code>
           </div>
 
-          <div className="org-chart-canvas">
-            <div className="org-top-node accent-brain">
-              <OrgNodeCard node={topOrchestrator} />
-            </div>
-            <div className="org-top-connector" />
-            <div className="org-department-grid">
-              {departments.map((department) => (
-                <DepartmentColumn department={department} key={department.id} />
-              ))}
-            </div>
+          <div className="org-member-grid">
+            {aiMembers.map((member) => (
+              <button
+                key={member.id}
+                type="button"
+                className={`org-member-card ${departmentTone(member)} ${selectedMember?.id === member.id ? "is-selected" : ""}`}
+                onClick={() => setSelectedId(member.id)}
+              >
+                <div className="section-split">
+                  <div>
+                    <p className="eyebrow">{member.department}</p>
+                    <h3>
+                      {member.emoji} {member.name}
+                    </h3>
+                    <p className="cell-note">{member.title}</p>
+                  </div>
+                  <span className={`badge ${presenceClass(member.runtime?.status)}`}>{presenceLabel(member.runtime?.status)}</span>
+                </div>
+
+                <dl className="org-card-metrics">
+                  <div>
+                    <dt>Last seen</dt>
+                    <dd>{formatMaybeDate(member.runtime?.lastSeen)}</dd>
+                  </div>
+                  <div>
+                    <dt>Current model</dt>
+                    <dd>{modelLabel(member)}</dd>
+                  </div>
+                  <div>
+                    <dt>Board load</dt>
+                    <dd>{boardLoadLabel(member)}</dd>
+                  </div>
+                </dl>
+
+                <p className="muted">{member.recentActivitySummary}</p>
+              </button>
+            ))}
           </div>
         </section>
 
-        <section className="panel worksheet-panel">
-          <p className="eyebrow">Package footprint</p>
-          <h3>Where the Episode 3 tools now live</h3>
-          <div className="surface-map-grid">
-            <article className="list-card">
-              <strong>Org Chart</strong>
-              <p className="cell-note">Role templates, worksheet prompts, direct-vs-delegate notes, and the internal operating map.</p>
-            </article>
-            <article className="list-card">
-              <strong>Briefing</strong>
-              <p className="cell-note">Reusable note templates plus real markdown docs under <code>docs/plans</code> for org decisions and tradeoffs.</p>
-            </article>
-            <article className="list-card">
-              <strong>Command</strong>
-              <p className="cell-note">Coverage matrix, workload gaps, handoff risk, ownership ambiguity, and Jarvis / human boundary placeholders.</p>
-            </article>
+        <section className="panel page-stack">
+          <div className="section-split">
+            <div>
+              <p className="eyebrow">Human collaborators</p>
+              <h3>Role details without fake OpenClaw state</h3>
+              <p className="muted">Human cards never show AI heartbeat presence.</p>
+            </div>
+            <code>{payload.source.boardPath}</code>
           </div>
 
-          <div className="doc-path-list">
-            {docPaths.map((docPath) => (
-              <code key={docPath}>{docPath}</code>
+          <div className="org-member-grid human-grid">
+            {humanMembers.map((member) => (
+              <button
+                key={member.id}
+                type="button"
+                className={`org-member-card tone-human ${selectedMember?.id === member.id ? "is-selected" : ""}`}
+                onClick={() => setSelectedId(member.id)}
+              >
+                <div className="section-split">
+                  <div>
+                    <p className="eyebrow">Human collaborator</p>
+                    <h3>
+                      {member.emoji} {member.name}
+                    </h3>
+                    <p className="cell-note">{member.title}</p>
+                  </div>
+                  <span className="badge neutral">Human role</span>
+                </div>
+
+                <dl className="org-card-metrics">
+                  <div>
+                    <dt>Board load</dt>
+                    <dd>{boardLoadLabel(member)}</dd>
+                  </div>
+                  <div>
+                    <dt>Standup mention</dt>
+                    <dd>{member.standup.latestMention || "Unavailable"}</dd>
+                  </div>
+                </dl>
+
+                <p className="muted">{member.humanActivitySummary || "No board or standup activity is available yet."}</p>
+              </button>
             ))}
           </div>
         </section>
       </div>
 
-      <section className="panel page-stack">
-        <div className="section-split">
-          <div>
-            <p className="eyebrow">Role templates</p>
-            <h3>Starter seats for real Mission Control operations</h3>
-            <p className="muted">Every template is grounded in internal engineering delivery, runtime truth, manual verification, or knowledge stewardship.</p>
-          </div>
-          <span className="badge neutral">Template library</span>
-        </div>
+      {selectedMember ? <OrgMemberDetail member={selectedMember} latestStandup={payload.latestStandup} /> : null}
+    </section>
+  );
+}
 
-        <div className="role-template-grid">
-          {roleTemplates.map((template) => (
-            <article className="list-card role-template-card" key={template.id}>
-              <div className="section-split">
+function OrgMemberDetail({ member, latestStandup }: { member: OrgMemberRecord; latestStandup: OrgPayload["latestStandup"] }) {
+  return (
+    <section className="panel org-detail-panel">
+      <div className="section-split">
+        <div>
+          <p className="eyebrow">Org detail</p>
+          <h3>
+            {member.emoji} {member.name}
+          </h3>
+          <p className="muted">{member.title}</p>
+        </div>
+        <a className="secondary-button overview-link-button" href={orgMemberHref(member.id)}>
+          Direct link
+        </a>
+      </div>
+
+      <div className="summary-cards">
+        <SummaryCard label="Department" value={member.department} />
+        <SummaryCard label="Role" value={member.title} />
+        <SummaryCard label="Open blockers" value={String(member.board.blocked)} tone={member.board.blocked ? "danger" : "neutral"} />
+        <SummaryCard label="Board load" value={member.board.total ? `${member.board.total} tasks` : "No tasks"} />
+      </div>
+
+      <div className="org-detail-grid">
+        <article className="list-card">
+          <div className="section-split">
+            <strong>Role / department</strong>
+            <span className="badge neutral">{member.memberKind === "ai" ? "AI" : "Human"}</span>
+          </div>
+          <p className="muted">{member.roleSummary}</p>
+          <dl className="lab-key-value compact-key-value">
+            <div>
+              <dt>Department</dt>
+              <dd>{member.department}</dd>
+            </div>
+            <div>
+              <dt>Latest board update</dt>
+              <dd>{formatMaybeDate(member.board.latestUpdatedAt)}</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article className="list-card">
+          <div className="section-split">
+            <strong>{member.memberKind === "ai" ? "Runtime state" : "Human activity"}</strong>
+            {member.memberKind === "ai" ? (
+              <span className={`badge ${presenceClass(member.runtime?.status)}`}>{presenceLabel(member.runtime?.status)}</span>
+            ) : (
+              <span className="badge neutral">No AI heartbeat</span>
+            )}
+          </div>
+
+          {member.memberKind === "ai" ? (
+            <>
+              <dl className="lab-key-value compact-key-value">
                 <div>
-                  <strong>{template.roleTitle}</strong>
-                  <p className="cell-note">{template.department}</p>
+                  <dt>Last seen</dt>
+                  <dd>{formatMaybeDate(member.runtime?.lastSeen)}</dd>
                 </div>
-                <div className="badge-row">
-                  <span className="badge neutral">{template.seatType}</span>
-                  <span className="badge neutral">{template.currentOwner}</span>
+                <div>
+                  <dt>Current model</dt>
+                  <dd>{modelLabel(member)}</dd>
                 </div>
-              </div>
-
-              <p>{template.coreResponsibility}</p>
-
-              <div className="template-metadata-grid">
-                <MetadataBlock label="Owned outcomes" items={template.ownedOutcomes} />
-                <MetadataBlock label="Owned workflows" items={template.ownedWorkflows} />
-                <MetadataBlock label="KPIs / success" items={template.kpis} />
-                <MetadataBlock label="Inputs" items={template.handoffInputs} />
-                <MetadataBlock label="Outputs" items={template.handoffOutputs} />
-                <MetadataBlock label="Tooling" items={template.tooling} />
-                <MetadataBlock label="Remain human" items={template.remainHuman} />
-                <MetadataBlock label="Automate later" items={template.automateLater} />
-              </div>
-
-              <div className="placeholder-example role-template-footer">
-                <div className="placeholder-example-row">
-                  <span>Direct vs coordination ratio</span>
-                  <strong>{template.executionRatio}</strong>
+                <div>
+                  <dt>Model source</dt>
+                  <dd>{member.runtime?.modelSource || "Unavailable"}</dd>
                 </div>
-                <div className="placeholder-example-row">
-                  <span>Escalation path</span>
-                  <strong>{template.escalationPath}</strong>
+                <div>
+                  <dt>Agent id</dt>
+                  <dd>{member.runtime?.agentId || "Unavailable"}</dd>
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+              </dl>
+              <p className="muted">{member.runtime?.detail || "Runtime evidence unavailable."}</p>
+            </>
+          ) : (
+            <p className="muted">
+              Runtime state is intentionally not derived from OpenClaw for human collaborators. Only board and standup evidence is shown.
+            </p>
+          )}
+        </article>
 
-      <section className="panel page-stack">
+        <article className="list-card">
+          <div className="section-split">
+            <strong>Current board load</strong>
+            <a className="secondary-button overview-link-button" href="/#/command">
+              Open board
+            </a>
+          </div>
+          <div className="summary-cards small-summary-cards">
+            <SummaryCard label="Open" value={String(member.board.open)} />
+            <SummaryCard label="Active" value={String(member.board.active)} tone={member.board.active ? "success" : "neutral"} />
+            <SummaryCard label="Ready" value={String(member.board.ready)} />
+            <SummaryCard label="Review" value={String(member.board.review)} />
+            <SummaryCard label="Shipped" value={String(member.board.shipped)} tone={member.board.shipped ? "success" : "neutral"} />
+            <SummaryCard
+              label="Completion"
+              value={member.board.completionRate == null ? "Unavailable" : `${member.board.completionRate}%`}
+            />
+          </div>
+        </article>
+
+        <article className="list-card">
+          <div className="section-split">
+            <strong>Latest standup mention</strong>
+            <a className="secondary-button overview-link-button" href="/?knowledgeView=standups#/knowledge">
+              Open transcript
+            </a>
+          </div>
+          <p className="muted">{member.standup.latestMention || "Unavailable"}</p>
+          <ul className="inline-list with-spacing">
+            <li>{member.standup.latestStandupDate || "Date unavailable"}</li>
+            <li>{member.standup.latestStandupStatus || "Status unavailable"}</li>
+            <li>{member.standup.latestChiefStatus || "Chief status unavailable"}</li>
+          </ul>
+          {latestStandup?.decisions?.length ? (
+            <div className="ref-row">
+              {latestStandup.decisions.map((item) => (
+                <code key={item}>{item}</code>
+              ))}
+            </div>
+          ) : null}
+        </article>
+      </div>
+
+      <section className="panel page-stack nested-panel">
         <div className="section-split">
           <div>
-            <p className="eyebrow">Briefing note structures</p>
-            <h3>Templates for org decisions and role-boundary tradeoffs</h3>
-            <p className="muted">The same structures also appear in the Briefing surface so planning can live with the rest of your operating context.</p>
+            <p className="eyebrow">Recent activity</p>
+            <h3>Most recent evidence across runtime, board, and standups</h3>
           </div>
-          <span className="badge neutral">Markdown + UI</span>
+          <span className="badge neutral">Real sources only</span>
         </div>
 
-        <div className="template-grid">
-          {noteTemplates.map((template) => (
-            <article className="list-card template-card" key={template.id}>
-              <div className="section-split">
-                <strong>{template.title}</strong>
-                <span className="badge neutral">Decision note</span>
-              </div>
-              <p>{template.purpose}</p>
-              <p className="cell-note">Example prompt: {template.exampleTitle}</p>
-              <ul className="inline-list with-spacing">
-                {template.fields.map((field) => (
-                  <li key={field}>{field}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel planner-panel">
-        <div className="section-split">
-          <div>
-            <p className="eyebrow">Practical worksheet</p>
-            <h3>Map current workload to future seats</h3>
-            <p className="muted">Local browser persistence only. Use this to think through what should stay with Brendan, what Jarvis should absorb, and what future seats are justified.</p>
+        {member.recentActivity.length ? (
+          <div className="stack-list">
+            {member.recentActivity.map((item) => (
+              <ActivityRow item={item} key={item.id} />
+            ))}
           </div>
-          <button className="secondary-button" type="button" onClick={resetWorkspace}>
-            Reset workspace
-          </button>
-        </div>
-
-        <div className="planner-grid worksheet-grid">
-          {worksheetSections.map((section) => (
-            <label className="planner-field" key={section.id}>
-              <div>
-                <h3>{section.title}</h3>
-                <p className="muted">{section.prompt}</p>
-              </div>
-              <ul className="inline-list">
-                {section.starterBullets.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <textarea
-                className="planner-textarea"
-                value={worksheet[section.id] ?? ""}
-                onChange={(event) => updateWorksheet(section.id, event.target.value)}
-                placeholder="Capture real current workload, ownership drift, candidate specialists, and what should stay human."
-                rows={7}
-              />
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel planner-panel">
-        <div className="section-split">
-          <div>
-            <p className="eyebrow">Jarvis boundary notes</p>
-            <h3>Direct execution vs delegation scratchpad</h3>
+        ) : (
+          <div className="empty-state compact">
+            <h3>No recent evidence</h3>
+            <p className="muted">No runtime, board, or standup activity is currently available for this member.</p>
           </div>
-          <span className="badge neutral">Local only</span>
-        </div>
-
-        <div className="planner-grid">
-          <PlannerField
-            title="Agent ideas"
-            prompt="Which future AI roles would most reduce operational drag around aries-app and Mission Control?"
-            value={notes.agentIdeas}
-            onChange={(value) => updateNote("agentIdeas", value)}
-            placeholder="Examples: runtime visibility steward, cron monitor, QA verifier, briefing steward…"
-          />
-          <PlannerField
-            title="Missing roles"
-            prompt="Which responsibilities still feel uncovered if the goal is clean delivery and truthful runtime visibility?"
-            value={notes.missingRoles}
-            onChange={(value) => updateNote("missingRoles", value)}
-            placeholder="Examples: release readiness, handoff validation, approval follow-through…"
-          />
-          <PlannerField
-            title="Repetitive tasks worth automation"
-            prompt="Which repeating tasks are predictable enough that they suggest an AI-owned seat or automation path?"
-            value={notes.repetitiveTasks}
-            onChange={(value) => updateNote("repetitiveTasks", value)}
-            placeholder="Examples: cron audits, runtime source checks, note compression, handoff reminders…"
-          />
-          <PlannerField
-            title="What stays human vs agent-owned"
-            prompt="Where do you want a hard line between human authority and agent execution?"
-            value={notes.humanVsAgent}
-            onChange={(value) => updateNote("humanVsAgent", value)}
-            placeholder="Examples: approvals stay human, bounded code fixes can go to Jarvis, dashboard checks stay human…"
-          />
-          <PlannerField
-            title="Operating model gaps"
-            prompt="What still feels fuzzy, overloaded, or likely to create ownership drift?"
-            value={notes.modelGaps}
-            onChange={(value) => updateNote("modelGaps", value)}
-            placeholder="Examples: cross-surface QA ownership, runtime truth verification, Jarvis capacity split…"
-          />
-        </div>
-      </section>
-
-      <section className="panel page-stack">
-        <div className="section-split">
-          <div>
-            <p className="eyebrow">Command / Ops preview</p>
-            <h3>Registers now mirrored in Command</h3>
-            <p className="muted">These are the same simple placeholders surfaced in Command so org risk is visible next to execution work.</p>
-          </div>
-          <span className="badge neutral">8 placeholders</span>
-        </div>
-
-        <div className="placeholder-grid">
-          {opsPlaceholders.slice(0, 4).map((placeholder) => (
-            <article className="list-card placeholder-card" key={placeholder.id}>
-              <strong>{placeholder.title}</strong>
-              <p className="cell-note">{placeholder.purpose}</p>
-              <div className="placeholder-columns">
-                {placeholder.columns.map((column) => (
-                  <code key={column}>{column}</code>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
+        )}
       </section>
     </section>
   );
 }
 
-function DepartmentColumn({ department }: { department: OrgDepartment }) {
+function ActivityRow({ item }: { item: OrgActivityItem }) {
   return (
-    <article className={`department-card accent-${department.accent}`}>
-      <div className="department-connector" />
-      <div className="department-frame">
-        <p className="eyebrow">{department.name}</p>
-        <p className="muted">{department.summary}</p>
-
-        <div className="org-column-section">
-          <p className="org-section-label">Department head</p>
-          <OrgNodeCard node={department.head} />
-        </div>
-
-        <div className="org-column-section">
-          <p className="org-section-label">Starter specialists</p>
-          <div className="org-specialist-stack">
-            {department.specialists.map((node) => (
-              <OrgNodeCard key={node.id} node={node} compact />
-            ))}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function OrgNodeCard({ node, compact = false }: { node: OrgNode; compact?: boolean }) {
-  const statusClass = node.name === "TBD" ? "is-tbd" : "is-filled";
-
-  return (
-    <article className={`org-node-card ${compact ? "is-compact" : ""} ${statusClass}`}>
-      <div className="section-split org-node-heading">
+    <article className="list-card compact-activity-card">
+      <div className="section-split">
         <div>
-          <strong>{node.name}</strong>
-          <p className="cell-note">{node.title}</p>
+          <strong>{statusLabel(item.kind)}</strong>
+          <p className="muted">{item.detail}</p>
         </div>
-        <div className="badge-row org-node-badges">
-          <span className={`badge entity-${node.actorType.toLowerCase()}`}>{node.actorType}</span>
-          <span className={`badge mode-${node.executionMode.toLowerCase().replace(/\s+/g, "-")}`}>{node.executionMode}</span>
-        </div>
+        <span className="badge neutral">{formatMaybeDate(item.timestamp)}</span>
       </div>
-      <p className="org-node-responsibility">{node.responsibility}</p>
+      <div className="ref-row">
+        <code>{item.source}</code>
+      </div>
+      <a className="secondary-button overview-link-button" href={item.href}>
+        Open source view
+      </a>
     </article>
   );
 }
 
-function PlannerField({
-  title,
-  prompt,
+function SummaryCard({
+  label,
   value,
-  onChange,
-  placeholder,
+  tone = "neutral",
 }: {
-  title: string;
-  prompt: string;
+  label: string;
   value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
+  tone?: "success" | "danger" | "warning" | "neutral";
 }) {
   return (
-    <label className="planner-field">
-      <div>
-        <h3>{title}</h3>
-        <p className="muted">{prompt}</p>
-      </div>
-      <textarea
-        className="planner-textarea"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={6}
-      />
-    </label>
-  );
-}
-
-function MetadataBlock({ label, items }: { label: string; items: string[] }) {
-  return (
-    <div className="metadata-block">
+    <div className={`stat-card ${tone === "success" ? "success" : tone === "danger" ? "danger" : tone === "warning" ? "warning" : ""}`}>
       <span>{label}</span>
-      <ul className="inline-list">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+      <strong>{value}</strong>
     </div>
   );
 }

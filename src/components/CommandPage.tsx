@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { opsPlaceholders } from "../lib/orgDesign";
+import { useMemo } from "react";
+import { ProjectBoardSection } from "./ProjectBoardSection";
+import { orgMemberHref } from "../lib/orgLinks";
 import type {
   ApiEnvelope,
   BriefingArchivePayload,
@@ -9,9 +10,9 @@ import type {
   CommandLoopRecord,
   CommandPayload,
   CronHealthPayload,
-  ExecutionTask,
   MemoryFilePayload,
   RuntimePayload,
+  OrgPayload,
 } from "../types";
 import { formatDate } from "../lib/format";
 
@@ -19,10 +20,12 @@ type Props = {
   payload: CommandPayload;
   buildLab: ResourceState<BuildLabPayload>;
   runtime: ResourceState<RuntimePayload>;
+  org: ResourceState<OrgPayload>;
   briefing: ResourceState<BriefingPayload>;
   briefingArchive: ResourceState<BriefingArchivePayload>;
   cronHealth: ResourceState<CronHealthPayload>;
   memoryFiles: ResourceState<MemoryFilePayload>;
+  reloadBoard: () => Promise<void>;
 };
 
 type ResourceState<T> = {
@@ -30,8 +33,6 @@ type ResourceState<T> = {
   loading: boolean;
   error: string | null;
 };
-
-type ViewFilter = "all" | "frontend" | "backend" | "manual" | "blocked" | "ready-next";
 
 const DASHBOARD_TIME_ZONE = "America/Los_Angeles";
 const routeHrefs = {
@@ -48,16 +49,6 @@ const routeHrefs = {
   buildLabResearch: "/?buildLabSection=research#/build-lab",
   runtime: "/#/runtime",
 };
-
-function matchesView(task: ExecutionTask, view: ViewFilter) {
-  if (view === "all") return true;
-  if (view === "frontend") return task.owner === "Rohan";
-  if (view === "backend") return task.owner === "Roy";
-  if (view === "manual") return task.owner === "Somwya";
-  if (view === "blocked") return task.blocked || task.status === "blocked";
-  if (view === "ready-next") return !task.blocked && task.status !== "done";
-  return true;
-}
 
 function parseOffsetLabel(label: string) {
   const match = /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(label || "");
@@ -166,45 +157,16 @@ function isSinceCutoff(value: string | null | undefined, cutoffMs: number) {
   return Number.isFinite(ms) && ms >= cutoffMs;
 }
 
-function formatBytes(bytes: number) {
-  const labels = ["B", "KB", "MB", "GB", "TB"];
-  let value = Number(bytes || 0);
-  let index = 0;
-  while (value >= 1024 && index < labels.length - 1) {
-    value /= 1024;
-    index += 1;
-  }
-  return `${index === 0 ? Math.round(value).toString() : value.toFixed(value < 10 ? 1 : 0)} ${labels[index]}`;
-}
-
-export function CommandPage({ payload, buildLab, runtime, briefing, briefingArchive, cronHealth, memoryFiles }: Props) {
-  const [view, setView] = useState<ViewFilter>("all");
-  const [owner, setOwner] = useState<string>("all");
-  const [status, setStatus] = useState<string>("all");
-  const [priority, setPriority] = useState<string>("all");
-  const [workstream, setWorkstream] = useState<string>("all");
-  const [blockedOnly, setBlockedOnly] = useState(false);
-
-  const filtered = useMemo(
-    () =>
-      payload.tasks.filter((task) => {
-        if (!matchesView(task, view)) return false;
-        if (owner !== "all" && task.owner !== owner) return false;
-        if (status !== "all" && task.status !== status) return false;
-        if (priority !== "all" && task.priority !== priority) return false;
-        if (workstream !== "all" && task.workstream !== workstream) return false;
-        if (blockedOnly && !task.blocked && task.status !== "blocked") return false;
-        return true;
-      }),
-    [blockedOnly, owner, payload.tasks, priority, status, view, workstream],
+export function CommandPage({ payload, buildLab, runtime, org, briefing, briefingArchive, cronHealth, memoryFiles, reloadBoard }: Props) {
+  const boardSummary = useMemo(
+    () => ({
+      total: payload.tasks.length,
+      blocked: payload.tasks.filter((task) => task.blocked).length,
+      stale: payload.tasks.filter((task) => task.stale).length,
+      active: payload.tasks.filter((task) => task.status === "active").length,
+    }),
+    [payload.tasks],
   );
-
-  const summary = {
-    total: payload.tasks.length,
-    blocked: payload.tasks.filter((task) => task.blocked || task.status === "blocked").length,
-    ready: payload.tasks.filter((task) => !task.blocked && task.status !== "done").length,
-    p0: payload.tasks.filter((task) => task.priority === "P0").length,
-  };
 
   const overview = useMemo(() => {
     const cutoffMs = lastCheckInCutoffMs();
@@ -264,6 +226,27 @@ export function CommandPage({ payload, buildLab, runtime, briefing, briefingArch
     const latestResearch = pickNewest(buildLabData?.research?.timeline ?? [], (item) => item.updatedAt);
     const latestPrototype = pickNewest(buildLabData?.prototypes?.items ?? [], (item) => item.updatedAt);
     const latestIdea = pickNewest(buildLabData?.ideas?.items ?? [], (item) => item.date);
+    const orgData = org.data?.data;
+
+    const delegationQueueTasks = payload.tasks
+      .filter((task) => ["intake", "scoping", "ready"].includes(task.status))
+      .sort((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0));
+
+    const delegationQueueByAssignee = delegationQueueTasks.reduce<Record<string, { label: string; href: string; count: number; tasks: string[] }>>((accumulator, task) => {
+      if (!accumulator[task.assigneeId]) {
+        accumulator[task.assigneeId] = {
+          label: task.assigneeDisplayName,
+          href: orgMemberHref(task.assigneeId),
+          count: 0,
+          tasks: [],
+        };
+      }
+      accumulator[task.assigneeId].count += 1;
+      if (accumulator[task.assigneeId].tasks.length < 2) {
+        accumulator[task.assigneeId].tasks.push(task.title);
+      }
+      return accumulator;
+    }, {});
 
     const attention: CommandAttentionItem[] = [
       ...recentJobs
@@ -390,38 +373,47 @@ export function CommandPage({ payload, buildLab, runtime, briefing, briefingArch
         latestPrototype,
         latestIdea,
       },
+      org: {
+        latestStandup: orgData?.latestStandup || null,
+        teamHealth: orgData?.summary || null,
+      },
+      delegationQueue: {
+        total: delegationQueueTasks.length,
+        groups: Object.values(delegationQueueByAssignee)
+          .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label))
+          .slice(0, 4),
+      },
       attention: attention.slice(0, 8),
       loops,
     };
-  }, [briefing.data?.data, briefingArchive.data?.data, buildLab.data?.data, cronHealth.data?.data, memoryFiles.data?.data, runtime.data?.data]);
+  }, [briefing.data?.data, briefingArchive.data?.data, buildLab.data?.data, cronHealth.data?.data, memoryFiles.data?.data, org.data?.data, payload.tasks, runtime.data?.data]);
 
   return (
     <section className="page-stack accent-ops">
       <header className="page-header panel">
         <div>
           <p className="eyebrow">Command</p>
-          <h2>Daily execution view</h2>
+          <h2>Internal execution center</h2>
           <p className="muted">
-            Command now combines internal planning data with real Knowledge, Build Lab, Runtime, and scheduler summaries.
-            Planning tasks remain distinct from runtime telemetry.
+            The Project Board below is the operational source of truth for assignments, blockers, handoffs, and standups. Runtime, Knowledge, and Build Lab remain separate live evidence surfaces.
           </p>
         </div>
         <div className="stats-grid compact-stats">
           <div className="stat-card">
             <span>Total tasks</span>
-            <strong>{summary.total}</strong>
+            <strong>{boardSummary.total}</strong>
           </div>
           <div className="stat-card warning">
             <span>Blocked</span>
-            <strong>{summary.blocked}</strong>
+            <strong>{boardSummary.blocked}</strong>
           </div>
           <div className="stat-card success">
-            <span>Ready next</span>
-            <strong>{summary.ready}</strong>
+            <span>Active</span>
+            <strong>{boardSummary.active}</strong>
           </div>
           <div className="stat-card danger">
-            <span>P0</span>
-            <strong>{summary.p0}</strong>
+            <span>Stale</span>
+            <strong>{boardSummary.stale}</strong>
           </div>
         </div>
       </header>
@@ -469,6 +461,34 @@ export function CommandPage({ payload, buildLab, runtime, briefing, briefingArch
             meta={overview.runtime.serviceIssues.length ? overview.runtime.serviceIssues.slice(0, 3).map((issue) => `${issue.label} → ${issue.status}`) : [resourceDetail(runtime)]}
             href={routeHrefs.runtime}
             sourceEndpoint="/api/app/runtime"
+          />
+          <OverviewCard
+            title="Last Standup"
+            subtitle={overview.org.latestStandup?.title || "No saved transcript"}
+            detail={overview.org.latestStandup
+              ? `${overview.org.latestStandup.respondingChiefCount ?? 0}/${overview.org.latestStandup.chiefCount ?? 0} chiefs responded • ${overview.org.latestStandup.preview || "Preview unavailable"}`
+              : resourceDetail(org)}
+            meta={overview.org.latestStandup
+              ? [
+                  overview.org.latestStandup.date || "Date unavailable",
+                  overview.org.latestStandup.status || "Status unavailable",
+                  ...(overview.org.latestStandup.decisions?.slice(0, 2) || overview.org.latestStandup.decisions || []),
+                ]
+              : [resourceDetail(org)]}
+            href="/?knowledgeView=standups#/knowledge"
+            sourceEndpoint="/api/org"
+          />
+          <OverviewCard
+            title="Delegation Queue"
+            subtitle={overview.delegationQueue.total ? `${overview.delegationQueue.total} not-started tasks` : "No not-started tasks"}
+            detail={overview.delegationQueue.groups.length
+              ? `Grouped from real intake / scoping / ready board tasks. ${overview.delegationQueue.groups[0].label} currently has ${overview.delegationQueue.groups[0].count}.`
+              : "No real board tasks are currently waiting to be started."}
+            meta={overview.delegationQueue.groups.length
+              ? overview.delegationQueue.groups.map((group) => `${group.label} → ${group.count}`)
+              : ["Project board has no matching tasks"]}
+            href={routeHrefs.command}
+            sourceEndpoint="/api/pm-board"
           />
           <OverviewCard
             title="Build Lab"
@@ -545,186 +565,7 @@ export function CommandPage({ payload, buildLab, runtime, briefing, briefingArch
         </section>
       ) : null}
 
-      <section className="panel">
-        <div className="toolbar">
-          <div className="tab-row">
-            {payload.views.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`tab-button ${view === item.id ? "is-active" : ""}`}
-                onClick={() => setView(item.id as ViewFilter)}
-              >
-                {item.label} <span>{item.count}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="filters-grid">
-            <label>
-              Owner
-              <select value={owner} onChange={(event) => setOwner(event.target.value)}>
-                <option value="all">All</option>
-                {payload.owners.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Status
-              <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                <option value="all">All</option>
-                <option value="todo">Todo</option>
-                <option value="in_progress">In progress</option>
-                <option value="blocked">Blocked</option>
-                <option value="done">Done</option>
-              </select>
-            </label>
-            <label>
-              Priority
-              <select value={priority} onChange={(event) => setPriority(event.target.value)}>
-                <option value="all">All</option>
-                <option value="P0">P0</option>
-                <option value="P1">P1</option>
-                <option value="P2">P2</option>
-                <option value="P3">P3</option>
-              </select>
-            </label>
-            <label>
-              Workstream
-              <select value={workstream} onChange={(event) => setWorkstream(event.target.value)}>
-                <option value="all">All</option>
-                {payload.workstreams.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="checkbox-filter">
-              <input
-                checked={blockedOnly}
-                onChange={(event) => setBlockedOnly(event.target.checked)}
-                type="checkbox"
-              />
-              Blocked only
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <section className="panel table-panel">
-        {filtered.length ? (
-          <div className="table-scroll">
-            <table className="data-table responsive-table">
-              <thead>
-                <tr>
-                  <th>Task</th>
-                  <th>Owner</th>
-                  <th>Status</th>
-                  <th>Priority</th>
-                  <th>Workstream</th>
-                  <th>Due</th>
-                  <th>Blocker</th>
-                  <th>Dependencies</th>
-                  <th>Next action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((task) => (
-                  <tr key={task.id}>
-                    <td data-label="Task">
-                      <strong>{task.title}</strong>
-                      <p className="cell-note">{task.description}</p>
-                      <div className="ref-row">
-                        {task.sourceRefs.map((ref) => (
-                          <code key={ref}>{ref}</code>
-                        ))}
-                      </div>
-                    </td>
-                    <td data-label="Owner">{task.owner}</td>
-                    <td data-label="Status">
-                      <span className={`badge status-${task.status}`}>{task.status.replace("_", " ")}</span>
-                    </td>
-                    <td data-label="Priority">
-                      <span className={`badge priority-${task.priority.toLowerCase()}`}>{task.priority}</span>
-                    </td>
-                    <td data-label="Workstream">{task.workstream}</td>
-                    <td data-label="Due">{formatDate(task.dueDate)}</td>
-                    <td data-label="Blocker">
-                      {task.blocked || task.status === "blocked" ? (
-                        <span className="badge status-blocked">{task.blockerReason ?? "Blocked"}</span>
-                      ) : (
-                        <span className="muted">Clear</span>
-                      )}
-                    </td>
-                    <td data-label="Dependencies">
-                      {task.dependencies.length ? (
-                        <ul className="inline-list">
-                          {task.dependencies.map((dependency) => (
-                            <li key={dependency}>{dependency}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="muted">None</span>
-                      )}
-                    </td>
-                    <td data-label="Next action">{task.nextAction}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty-state">
-            <h3>No tasks match the current filters</h3>
-            <p className="muted">The execution board is live, but this filter combination is empty.</p>
-          </div>
-        )}
-      </section>
-
-      <section className="panel page-stack">
-        <div className="section-split">
-          <div>
-            <p className="eyebrow">Episode 3 ops scaffolding</p>
-            <h3>Coverage, handoff, and workload placeholders</h3>
-            <p className="muted">
-              Lightweight internal planning structures only. These placeholders support org-design decisions without pretending to be live telemetry.
-            </p>
-          </div>
-          <span className="badge neutral">Fill-in ready</span>
-        </div>
-
-        <div className="placeholder-grid">
-          {opsPlaceholders.map((placeholder) => (
-            <article className="list-card placeholder-card" key={placeholder.id}>
-              <div className="section-split">
-                <div>
-                  <strong>{placeholder.title}</strong>
-                  <p className="cell-note">{placeholder.surface} surface</p>
-                </div>
-                <span className="badge neutral">Register</span>
-              </div>
-              <p>{placeholder.purpose}</p>
-              <div className="placeholder-columns">
-                {placeholder.columns.map((column) => (
-                  <code key={column}>{column}</code>
-                ))}
-              </div>
-              <div className="placeholder-example">
-                {placeholder.exampleRow.map((value, index) => (
-                  <div className="placeholder-example-row" key={`${placeholder.id}-${placeholder.columns[index]}`}>
-                    <span>{placeholder.columns[index]}</span>
-                    <strong>{value}</strong>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+      <ProjectBoardSection payload={payload} onReload={reloadBoard} />
     </section>
   );
 }

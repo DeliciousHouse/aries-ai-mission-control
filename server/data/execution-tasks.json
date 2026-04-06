@@ -1,18 +1,273 @@
 {
-  "kind": "internal-planning",
-  "updatedAt": "2026-04-03T14:44:00.000Z",
-  "note": "Internal planning data for Aries Mission Control. This file is allowed to hold human planning state, but it must never be treated as runtime telemetry.",
+  "schema": "sugarandleather.project-board.v2",
+  "updatedAt": "2026-04-05T10:37:45.645Z",
+  "note": "Internal execution board for Aries AI. This board is the operational source of truth for ownership, blockers, handoffs, and status changes. It is not runtime telemetry.",
   "tasks": [
+    {
+      "id": "standardize-handoff-note-capture-for-chief-standups",
+      "title": "Standardize handoff note capture for chief standups",
+      "description": "Add a repeatable note pattern for briefs, memory, and handoff hygiene so Ledger can compress cross-chief context without free-text drift.",
+      "assigneeId": "ledger",
+      "assigneeType": "chief",
+      "assigneeDisplayName": "📚 Ledger",
+      "status": "review",
+      "priority": "P1",
+      "createdAt": "2026-04-05T10:37:45.620Z",
+      "updatedAt": "2026-04-05T10:37:45.645Z",
+      "deliverableLink": null,
+      "notes": [
+        {
+          "id": "note-1775385465620",
+          "body": "Verification seed for Operations & Knowledge chief API flow.",
+          "createdAt": "2026-04-05T10:37:45.620Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775385465645",
+          "body": "Ledger drafted the handoff structure and moved it into review.",
+          "createdAt": "2026-04-05T10:37:45.645Z",
+          "actorId": "ledger",
+          "actorDisplayName": "📚 Ledger"
+        }
+      ],
+      "workstream": "handoff-hygiene",
+      "systemScope": "knowledge",
+      "taskDomain": "operations-knowledge",
+      "blocked": false,
+      "blockerReason": null,
+      "statusHistory": [
+        {
+          "timestamp": "2026-04-05T10:37:45.620Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": null,
+          "toStatus": "intake",
+          "note": "Verification seed for Operations & Knowledge chief API flow."
+        },
+        {
+          "timestamp": "2026-04-05T10:37:45.645Z",
+          "actorId": "ledger",
+          "actorDisplayName": "📚 Ledger",
+          "fromStatus": "intake",
+          "toStatus": "review",
+          "note": "Ledger drafted the handoff structure and moved it into review."
+        }
+      ],
+      "createdBy": {
+        "actorId": "jarvis",
+        "actorDisplayName": "🜂 Jarvis",
+        "actorType": "ai-orchestrator"
+      },
+      "updatedBy": {
+        "actorId": "ledger",
+        "actorDisplayName": "📚 Ledger",
+        "actorType": "chief"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist"
+      ],
+      "executionMode": "standard",
+      "dependencies": [
+        "Confirm which standup fields belong in board notes vs daily brief markdown"
+      ],
+      "nextAction": "Define the minimum standup note fields that should be written back to the Project Board and linked into briefs.",
+      "sourceRefs": [
+        "Episode 2 Project Board upgrade verification"
+      ],
+      "dueDate": null
+    },
+    {
+      "id": "surface-missed-scheduler-runs-in-mission-control-runtime-health",
+      "title": "Surface missed scheduler runs in Mission Control runtime health",
+      "description": "Make runtime visibility clearly surface when expected cron jobs miss their window so Signal can triage scheduler health from the board first.",
+      "assigneeId": "signal",
+      "assigneeType": "chief",
+      "assigneeDisplayName": "📡 Signal",
+      "status": "active",
+      "priority": "P0",
+      "createdAt": "2026-04-05T10:37:45.611Z",
+      "updatedAt": "2026-04-05T10:37:45.638Z",
+      "deliverableLink": null,
+      "notes": [
+        {
+          "id": "note-1775385465611",
+          "body": "Verification seed for Runtime & Automation chief API flow.",
+          "createdAt": "2026-04-05T10:37:45.611Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775385465638",
+          "body": "Runtime & Automation started the scheduler health pass.",
+          "createdAt": "2026-04-05T10:37:45.638Z",
+          "actorId": "signal",
+          "actorDisplayName": "📡 Signal"
+        }
+      ],
+      "workstream": "scheduler-health",
+      "systemScope": "runtime",
+      "taskDomain": "runtime-automation",
+      "blocked": false,
+      "blockerReason": null,
+      "statusHistory": [
+        {
+          "timestamp": "2026-04-05T10:37:45.611Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": null,
+          "toStatus": "intake",
+          "note": "Verification seed for Runtime & Automation chief API flow."
+        },
+        {
+          "timestamp": "2026-04-05T10:37:45.638Z",
+          "actorId": "signal",
+          "actorDisplayName": "📡 Signal",
+          "fromStatus": "intake",
+          "toStatus": "active",
+          "note": "Runtime & Automation started the scheduler health pass."
+        }
+      ],
+      "createdBy": {
+        "actorId": "jarvis",
+        "actorDisplayName": "🜂 Jarvis",
+        "actorType": "ai-orchestrator"
+      },
+      "updatedBy": {
+        "actorId": "signal",
+        "actorDisplayName": "📡 Signal",
+        "actorType": "chief"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist"
+      ],
+      "executionMode": "standard",
+      "dependencies": [
+        "Verify the cron health payload already includes the fields needed for a missed-run heuristic"
+      ],
+      "nextAction": "Define the runtime health signal and stale threshold that should trigger a missed-run alert in Command and Runtime.",
+      "sourceRefs": [
+        "Episode 2 Project Board upgrade verification"
+      ],
+      "dueDate": null
+    },
+    {
+      "id": "tighten-aries-app-dashboard-owner-handoff-states",
+      "title": "Tighten aries-app dashboard owner handoff states",
+      "description": "Make the aries-app dashboard explicitly show when frontend work is waiting on backend contract confirmation so Engineering Delivery standups stop losing the dependency.",
+      "assigneeId": "forge",
+      "assigneeType": "chief",
+      "assigneeDisplayName": "🔥 Forge",
+      "status": "ready",
+      "priority": "P1",
+      "createdAt": "2026-04-05T10:37:45.595Z",
+      "updatedAt": "2026-04-05T10:37:45.629Z",
+      "deliverableLink": null,
+      "notes": [
+        {
+          "id": "note-1775385465595",
+          "body": "Verification seed for Engineering Delivery chief API flow.",
+          "createdAt": "2026-04-05T10:37:45.595Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775385465629",
+          "body": "Engineering Delivery scoped this and marked it ready for implementation.",
+          "createdAt": "2026-04-05T10:37:45.629Z",
+          "actorId": "forge",
+          "actorDisplayName": "🔥 Forge"
+        }
+      ],
+      "workstream": "engineering-delivery",
+      "systemScope": "aries-app",
+      "taskDomain": "frontend",
+      "blocked": false,
+      "blockerReason": null,
+      "statusHistory": [
+        {
+          "timestamp": "2026-04-05T10:37:45.595Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": null,
+          "toStatus": "intake",
+          "note": "Verification seed for Engineering Delivery chief API flow."
+        },
+        {
+          "timestamp": "2026-04-05T10:37:45.629Z",
+          "actorId": "forge",
+          "actorDisplayName": "🔥 Forge",
+          "fromStatus": "intake",
+          "toStatus": "ready",
+          "note": "Engineering Delivery scoped this and marked it ready for implementation."
+        }
+      ],
+      "createdBy": {
+        "actorId": "jarvis",
+        "actorDisplayName": "🜂 Jarvis",
+        "actorType": "ai-orchestrator"
+      },
+      "updatedBy": {
+        "actorId": "forge",
+        "actorDisplayName": "🔥 Forge",
+        "actorType": "chief"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist",
+        "human-collaborator"
+      ],
+      "executionMode": "standard",
+      "dependencies": [
+        "Confirm the backend contract language Brendan wants surfaced in the UI"
+      ],
+      "nextAction": "Review the current dashboard cards and define the exact frontend handoff state copy needed for blocked backend dependencies.",
+      "sourceRefs": [
+        "Episode 2 Project Board upgrade verification"
+      ],
+      "dueDate": null
+    },
     {
       "id": "fix-repair-sweep-launcher",
       "title": "Fix repair sweep launcher entrypoint",
-      "owner": "Roy",
-      "status": "todo",
+      "description": "Nightly repair sweep failures show the launcher calling an invalid workflow path instead of a verified runtime entrypoint.",
+      "assigneeId": "roy",
+      "assigneeType": "human-collaborator",
+      "assigneeDisplayName": "🧰 Roy",
+      "status": "intake",
       "priority": "P0",
+      "createdAt": "2026-04-03T14:44:00.000Z",
+      "updatedAt": "2026-04-03T14:44:00.000Z",
+      "deliverableLink": null,
+      "notes": [],
       "workstream": "runtime",
-      "dueDate": null,
+      "systemScope": "aries-app",
+      "taskDomain": "backend",
       "blocked": false,
       "blockerReason": null,
+      "statusHistory": [],
+      "createdBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "updatedBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist",
+        "human-collaborator"
+      ],
+      "executionMode": "standard",
       "dependencies": [
         "Confirm the valid Lobster pipeline or skill entrypoint for the repair sweep"
       ],
@@ -21,18 +276,44 @@
         "openclaw tasks list --json",
         "openclaw cron list --all --json"
       ],
-      "description": "Nightly repair sweep failures show the launcher calling an invalid workflow path instead of a verified runtime entrypoint."
+      "dueDate": null
     },
     {
       "id": "stabilize-automation-model-auth",
       "title": "Stabilize model auth / billing failures affecting overnight jobs",
-      "owner": "Roy",
-      "status": "in_progress",
+      "description": "Recent cron failures include OpenAI Codex token refresh and Venice billing errors. Those failures need a verified runtime explanation and fix path.",
+      "assigneeId": "roy",
+      "assigneeType": "human-collaborator",
+      "assigneeDisplayName": "🧰 Roy",
+      "status": "active",
       "priority": "P0",
+      "createdAt": "2026-04-03T14:44:00.000Z",
+      "updatedAt": "2026-04-03T14:44:00.000Z",
+      "deliverableLink": null,
+      "notes": [],
       "workstream": "runtime",
-      "dueDate": null,
+      "systemScope": "aries-app",
+      "taskDomain": "backend",
       "blocked": false,
       "blockerReason": null,
+      "statusHistory": [],
+      "createdBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "updatedBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist",
+        "human-collaborator"
+      ],
+      "executionMode": "standard",
       "dependencies": [
         "Review current provider auth state",
         "Verify fallback model behavior for cron runs"
@@ -42,18 +323,41 @@
         "openclaw cron list --all --json",
         "openclaw models status --json"
       ],
-      "description": "Recent cron failures include OpenAI Codex token refresh and Venice billing errors. Those failures need a verified runtime explanation and fix path."
+      "dueDate": null
     },
     {
       "id": "configure-git-identity-for-backups",
       "title": "Configure Git identity for private repo backup automation",
-      "owner": "Somwya",
-      "status": "todo",
+      "description": "Private repo backup jobs are repeatedly failing at git commit because author identity is not configured in the execution environment.",
+      "assigneeId": "somwya",
+      "assigneeType": "human-collaborator",
+      "assigneeDisplayName": "📝 Somwya",
+      "status": "intake",
       "priority": "P1",
-      "workstream": "ops",
-      "dueDate": null,
+      "createdAt": "2026-04-03T14:44:00.000Z",
+      "updatedAt": "2026-04-03T14:44:00.000Z",
+      "deliverableLink": null,
+      "notes": [],
+      "workstream": "operations",
+      "systemScope": "operations",
+      "taskDomain": "manual-ops",
       "blocked": false,
       "blockerReason": null,
+      "statusHistory": [],
+      "createdBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "updatedBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "allowedAssigneeTypes": [
+        "human-collaborator"
+      ],
+      "executionMode": "standard",
       "dependencies": [
         "Confirm the intended Git author name and email for host-side backup commits"
       ],
@@ -61,18 +365,43 @@
       "sourceRefs": [
         "openclaw tasks list --json"
       ],
-      "description": "Private repo backup jobs are repeatedly failing at git commit because author identity is not configured in the execution environment."
+      "dueDate": null
     },
     {
       "id": "ship-mission-control-skeleton",
       "title": "Ship first Mission Control dashboard skeleton in /app/mission-control",
-      "owner": "Rohan",
-      "status": "in_progress",
+      "description": "Current request: build the first production-ready Mission Control skeleton for engineering execution and OpenClaw runtime visibility.",
+      "assigneeId": "jarvis",
+      "assigneeType": "ai-orchestrator",
+      "assigneeDisplayName": "🜂 Jarvis",
+      "status": "active",
       "priority": "P0",
+      "createdAt": "2026-04-03T14:44:00.000Z",
+      "updatedAt": "2026-04-03T14:44:00.000Z",
+      "deliverableLink": null,
+      "notes": [],
       "workstream": "mission-control-ui",
-      "dueDate": null,
+      "systemScope": "mission-control",
+      "taskDomain": "mission-control",
       "blocked": false,
       "blockerReason": null,
+      "statusHistory": [],
+      "createdBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "updatedBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist"
+      ],
+      "executionMode": "standard",
       "dependencies": [
         "Use real OpenClaw sources for runtime panels",
         "Keep execution planning data separate from telemetry"
@@ -81,18 +410,44 @@
       "sourceRefs": [
         "Brendan request 2026-04-03 07:44 PDT"
       ],
-      "description": "Current request: build the first production-ready Mission Control skeleton for engineering execution and OpenClaw runtime visibility."
+      "dueDate": null
     },
     {
       "id": "wire-lobster-monitor-history",
       "title": "Expand Lobster / TaskFlow visibility once a live history source is verified",
-      "owner": "Roy",
-      "status": "blocked",
+      "description": "The runtime shell can render a truthful empty state now, but deeper Lobster history should not be fabricated until a real source is connected.",
+      "assigneeId": "roy",
+      "assigneeType": "human-collaborator",
+      "assigneeDisplayName": "🧰 Roy",
+      "status": "active",
       "priority": "P1",
+      "createdAt": "2026-04-03T14:44:00.000Z",
+      "updatedAt": "2026-04-03T14:44:00.000Z",
+      "deliverableLink": null,
+      "notes": [],
       "workstream": "runtime",
-      "dueDate": null,
+      "systemScope": "aries-app",
+      "taskDomain": "backend",
       "blocked": true,
       "blockerReason": "Current `openclaw tasks flow list --json` source returns zero flows; no separate Lobster history source has been verified yet.",
+      "statusHistory": [],
+      "createdBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "updatedBy": {
+        "actorId": "board-system",
+        "actorDisplayName": "🧭 Board system",
+        "actorType": "system"
+      },
+      "allowedAssigneeTypes": [
+        "ai-orchestrator",
+        "chief",
+        "ai-specialist",
+        "human-collaborator"
+      ],
+      "executionMode": "standard",
       "dependencies": [
         "Find a verified Lobster run history source beyond the current empty TaskFlow list"
       ],
@@ -100,7 +455,7 @@
       "sourceRefs": [
         "openclaw tasks flow list --json"
       ],
-      "description": "The runtime shell can render a truthful empty state now, but deeper Lobster history should not be fabricated until a real source is connected."
+      "dueDate": null
     }
   ]
 }

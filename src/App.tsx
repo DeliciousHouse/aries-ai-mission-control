@@ -17,6 +17,7 @@ import type {
   CronHealthPayload,
   MemoryFilePayload,
   RuntimePayload,
+  OrgPayload,
 } from "./types";
 
 export default function App() {
@@ -25,22 +26,23 @@ export default function App() {
   const command = usePollingResource({ load: api.loadCommand, intervalMs: 30000 });
   const buildLab = usePollingResource({ load: api.loadBuildLab, intervalMs: 30000 });
   const runtime = usePollingResource({ load: api.loadRuntime, intervalMs: 30000 });
+  const org = usePollingResource({ load: api.loadOrg, intervalMs: 30000 });
   const briefing = usePollingResource({ load: api.loadBriefing, intervalMs: 30000 });
   const briefingArchive = usePollingResource({ load: api.loadBriefingArchive, intervalMs: 30000 });
   const cronHealth = usePollingResource({ load: api.loadCronHealth, intervalMs: 30000 });
   const memoryFiles = usePollingResource({ load: api.loadMemoryFiles, intervalMs: 30000 });
 
   const lastUpdated = useMemo(() => {
-    const timestamps = [command.data, buildLab.data, runtime.data, briefing.data, briefingArchive.data, cronHealth.data, memoryFiles.data]
+    const timestamps = [command.data, buildLab.data, runtime.data, org.data, briefing.data, briefingArchive.data, cronHealth.data, memoryFiles.data]
       .map((entry) => entry?.generatedAt)
       .filter(Boolean) as string[];
     const sorted = timestamps.sort();
     return sorted.length ? sorted[sorted.length - 1] : null;
-  }, [briefing.data, briefingArchive.data, buildLab.data, command.data, cronHealth.data, memoryFiles.data, runtime.data]);
+  }, [briefing.data, briefingArchive.data, buildLab.data, command.data, cronHealth.data, memoryFiles.data, org.data, runtime.data]);
 
   const activeView = (() => {
     if (route === "org-chart") {
-      return <OrgChartPage />;
+      return <ModuleGate label="Org Chart" resource={org} render={(payload) => <OrgChartPage payload={payload.data as OrgPayload} />} />;
     }
     if (route === "command") {
       return (
@@ -52,17 +54,19 @@ export default function App() {
               payload={payload.data as CommandPayload}
               buildLab={buildLab as any}
               runtime={runtime as any}
+              org={org as any}
               briefing={briefing as any}
               briefingArchive={briefingArchive as any}
               cronHealth={cronHealth as any}
               memoryFiles={memoryFiles as any}
+              reloadBoard={command.reload}
             />
           )}
         />
       );
     }
     if (route === "knowledge") {
-      return <KnowledgePage />;
+      return <KnowledgePage org={org as any} />;
     }
     if (route === "build-lab") {
       return <ModuleGate label="Build Lab" resource={buildLab} render={(payload) => <BuildLabPage payload={payload.data as BuildLabPayload} />} />;
