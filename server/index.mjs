@@ -10,6 +10,11 @@ import {
   readJsonBody,
   updateProjectBoardTask,
 } from "./lib/project-board.mjs";
+import {
+  approveRoutingRequest,
+  ingestChiefReport,
+  rejectRoutingRequest,
+} from "./lib/routing-requests.mjs";
 import { isAllowedBuildLabFile, loadBuildLabFile } from "./loaders/build-lab-data.mjs";
 import { isAllowedStandupFile, loadStandupFile } from "./loaders/standup-data.mjs";
 
@@ -30,11 +35,59 @@ const contentTypes = {
   ".png": "image/png",
 };
 
+const documentCacheControl = "public, max-age=0, must-revalidate";
+const immutableAssetCacheControl = "public, max-age=31536000, immutable";
+const apiCacheControl = "no-store";
+
+const securityHeaders = {
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self'",
+    "connect-src 'self' https://control.sugarandleather.com",
+    "img-src 'self' data:",
+    "font-src 'self' data:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+  ].join('; '),
+  "Strict-Transport-Security": "max-age=2592000",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Content-Type-Options": "nosniff",
+};
+
+function buildHeaders(extra = {}) {
+  return {
+    ...securityHeaders,
+    ...extra,
+  };
+}
+
+function fileCacheControl(filePath) {
+  const relativePath = path.relative(distRoot, filePath).replace(/\\/g, "/");
+  if (relativePath.startsWith("assets/")) {
+    return immutableAssetCacheControl;
+  }
+  if (path.extname(filePath) === ".html") {
+    return documentCacheControl;
+  }
+  return documentCacheControl;
+}
+
 async function serveFile(filePath, res) {
   const ext = path.extname(filePath);
   const contentType = contentTypes[ext] || "application/octet-stream";
   const data = await fs.readFile(filePath);
-  res.writeHead(200, { "Content-Type": contentType });
+  res.writeHead(
+    200,
+    buildHeaders({
+      "Content-Type": contentType,
+      "Cache-Control": fileCacheControl(filePath),
+    }),
+  );
   res.end(data);
 }
 
@@ -45,10 +98,10 @@ const server = http.createServer(async (req, res) => {
     if (isBoardRequestPath(url.pathname) && req.method === "POST" && url.pathname === "/api/pm-board") {
       const body = await readJsonBody(req);
       const data = await createProjectBoardTask(body);
-      res.writeHead(201, {
+      res.writeHead(201, buildHeaders({
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store",
-      });
+        "Cache-Control": apiCacheControl,
+      }));
       res.end(JSON.stringify({ data }));
       return;
     }
@@ -60,10 +113,38 @@ const server = http.createServer(async (req, res) => {
       }
       const body = await readJsonBody(req);
       const data = await updateProjectBoardTask(taskId, body);
-      res.writeHead(200, {
+      res.writeHead(200, buildHeaders({
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store",
-      });
+        "Cache-Control": apiCacheControl,
+      }));
+      res.end(JSON.stringify({ data }));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/routing-requests/from-chief-report") {
+      const body = await readJsonBody(req);
+      const data = await ingestChiefReport(body);
+      res.writeHead(201, buildHeaders({
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": apiCacheControl,
+      }));
+      res.end(JSON.stringify({ data }));
+      return;
+    }
+
+    if (req.method === "POST" && /^\/api\/routing-requests\/[^/]+\/(approve|reject)$/.test(url.pathname)) {
+      const [, requestId, action] = url.pathname.match(/^\/api\/routing-requests\/([^/]+)\/(approve|reject)$/) || [];
+      if (!requestId || !action) {
+        throw new ApiError("Routing request action path is invalid.", 400);
+      }
+      const body = await readJsonBody(req);
+      const data = action === "approve"
+        ? await approveRoutingRequest(requestId, body)
+        : await rejectRoutingRequest(requestId, body);
+      res.writeHead(200, buildHeaders({
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": apiCacheControl,
+      }));
       res.end(JSON.stringify({ data }));
       return;
     }
@@ -74,10 +155,10 @@ const server = http.createServer(async (req, res) => {
         throw new ApiError("Invalid Build Lab file path.", 400);
       }
       const { content, contentType } = await loadBuildLabFile(pathParam);
-      res.writeHead(200, {
+      res.writeHead(200, buildHeaders({
         "Content-Type": contentType,
-        "Cache-Control": "no-store",
-      });
+        "Cache-Control": apiCacheControl,
+      }));
       res.end(content);
       return;
     }
@@ -88,10 +169,10 @@ const server = http.createServer(async (req, res) => {
         throw new ApiError("Invalid standup file path.", 400);
       }
       const { content, contentType } = await loadStandupFile(pathParam);
-      res.writeHead(200, {
+      res.writeHead(200, buildHeaders({
         "Content-Type": contentType,
-        "Cache-Control": "no-store",
-      });
+        "Cache-Control": apiCacheControl,
+      }));
       res.end(content);
       return;
     }
@@ -99,10 +180,10 @@ const server = http.createServer(async (req, res) => {
     const apiPayload = await loadApiPath(url.pathname, url);
 
     if (apiPayload) {
-      res.writeHead(200, {
+      res.writeHead(200, buildHeaders({
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store",
-      });
+        "Cache-Control": apiCacheControl,
+      }));
       res.end(JSON.stringify(apiPayload));
       return;
     }
@@ -123,20 +204,21 @@ const server = http.createServer(async (req, res) => {
     await serveFile(path.join(distRoot, "index.html"), res);
   } catch (error) {
     if (error instanceof ApiError) {
-      res.writeHead(error.status, { "Content-Type": "application/json; charset=utf-8" });
+      res.writeHead(error.status, buildHeaders({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": apiCacheControl }));
       res.end(JSON.stringify({ error: error.message }));
       return;
     }
 
     if (error?.name === "ValidationError" || error?.name === "NotFoundError") {
-      res.writeHead(error.status || (error.name === "NotFoundError" ? 404 : 400), {
+      res.writeHead(error.status || (error.name === "NotFoundError" ? 404 : 400), buildHeaders({
         "Content-Type": "application/json; charset=utf-8",
-      });
+        "Cache-Control": apiCacheControl,
+      }));
       res.end(JSON.stringify(boardErrorPayload(error)));
       return;
     }
 
-    res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+    res.writeHead(500, buildHeaders({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": apiCacheControl }));
     res.end(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown server error" }));
   }
 });

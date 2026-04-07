@@ -15,7 +15,10 @@ export function resolveRepoRoot() {
   const candidates = [
     process.env.ARIES_APP_ROOT,
     "/app/aries-app",
+    "/home/node/openclaw/aries-app",
     path.resolve(missionControlRoot, "../aries-app"),
+    path.resolve(missionControlRoot, "../../aries-app"),
+    path.resolve(missionControlRoot, "../../../aries-app"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
