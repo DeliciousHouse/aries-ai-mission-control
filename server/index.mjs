@@ -44,6 +44,7 @@ const securityHeaders = {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self'",
+    "style-src-attr 'unsafe-inline'",
     "connect-src 'self' https://control.sugarandleather.com",
     "img-src 'self' data:",
     "font-src 'self' data:",

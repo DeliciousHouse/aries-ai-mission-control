@@ -29,7 +29,7 @@ export async function cachedLoad(key, ttlMs, load) {
       if (existing?.value) {
         cache.set(key, {
           value: existing.value,
-          expiresAt: Math.min(existing.expiresAt, now() + Math.max(Math.floor(ttlMs / 4), 1000)),
+          expiresAt: now() + Math.max(Math.floor(ttlMs / 4), 1000),
           inFlight: null,
         });
       } else {

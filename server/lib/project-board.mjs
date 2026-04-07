@@ -716,6 +716,9 @@ export async function updateProjectBoardTask(taskId, input) {
 
   const isForce = Boolean(input.forceAction);
   const forceReason = asTrimmedString(input.forceReason);
+  if (isForce && !forceReason) {
+    throw validationError("forceReason is required when forceAction is true.", { field: "forceReason" });
+  }
 
   const normalized = normalizeTaskForStorage(candidate, directory, actor, {
     now,

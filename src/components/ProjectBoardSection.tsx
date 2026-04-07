@@ -126,14 +126,19 @@ export function ProjectBoardSection({ payload, onReload }: Props) {
   );
 
   useEffect(() => {
+    if (selectedTaskId) return;
     const params = new URLSearchParams(window.location.search);
     const requestedTaskId = params.get("taskId");
     if (!requestedTaskId) return;
     if (payload.tasks.some((task) => task.id === requestedTaskId)) {
       setSelectedTaskId(requestedTaskId);
       setCreating(false);
+      params.delete("taskId");
+      const nextSearch = params.toString();
+      const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+      window.history.replaceState(window.history.state, "", nextUrl);
     }
-  }, [payload.tasks]);
+  }, [payload.tasks, selectedTaskId]);
 
   const visibleTasks = useMemo(() => sortByStatus(payload.tasks.filter((task) => filterTask(task, filters))), [filters, payload.tasks]);
 
