@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { AppShell } from "./components/AppShell";
+import { ApprovalsPage } from "./components/ApprovalsPage";
 import { BuildLabPage } from "./components/BuildLabPage";
 import { CommandPage } from "./components/CommandPage";
 import { OrgChartPage } from "./components/OrgChartPage";
@@ -16,29 +17,133 @@ import type {
   CommandPayload,
   CronHealthPayload,
   MemoryFilePayload,
+  RoutingRequestPayload,
   RuntimePayload,
   OrgPayload,
 } from "./types";
 
 export default function App() {
   const { route, navigate } = useHashRoute();
+  const deferredCommandOverview = useDeferredActivation(route === "command", 1500);
 
-  const command = usePollingResource({ load: api.loadCommand, intervalMs: 30000 });
-  const buildLab = usePollingResource({ load: api.loadBuildLab, intervalMs: 30000 });
-  const runtime = usePollingResource({ load: api.loadRuntime, intervalMs: 30000 });
-  const org = usePollingResource({ load: api.loadOrg, intervalMs: 30000 });
-  const briefing = usePollingResource({ load: api.loadBriefing, intervalMs: 30000 });
-  const briefingArchive = usePollingResource({ load: api.loadBriefingArchive, intervalMs: 30000 });
-  const cronHealth = usePollingResource({ load: api.loadCronHealth, intervalMs: 30000 });
-  const memoryFiles = usePollingResource({ load: api.loadMemoryFiles, intervalMs: 30000 });
+  const command = usePollingResource({ load: api.loadCommand, intervalMs: 30000, enabled: route === "command" });
+  const buildLab = usePollingResource({
+    load: api.loadBuildLab,
+    intervalMs: 30000,
+    enabled: route === "build-lab" || deferredCommandOverview,
+    initialDelayMs: route === "build-lab" ? 0 : 300,
+  });
+  const runtime = usePollingResource({
+    load: api.loadRuntime,
+    intervalMs: 30000,
+    enabled: route === "runtime" || deferredCommandOverview,
+    initialDelayMs: route === "runtime" ? 0 : 500,
+  });
+  const org = usePollingResource({
+    load: api.loadOrg,
+    intervalMs: 30000,
+    enabled: route === "org-chart" || route === "knowledge" || deferredCommandOverview,
+    initialDelayMs: route === "org-chart" || route === "knowledge" ? 0 : 700,
+  });
+  const briefing = usePollingResource({
+    load: api.loadBriefing,
+    intervalMs: 30000,
+    enabled: deferredCommandOverview,
+    initialDelayMs: 900,
+  });
+  const briefingArchive = usePollingResource({
+    load: api.loadBriefingArchive,
+    intervalMs: 30000,
+    enabled: route === "knowledge" || deferredCommandOverview,
+    initialDelayMs: route === "knowledge" ? 0 : 1100,
+  });
+  const cronHealth = usePollingResource({
+    load: api.loadCronHealth,
+    intervalMs: 30000,
+    enabled: route === "knowledge" || deferredCommandOverview,
+    initialDelayMs: route === "knowledge" ? 0 : 1300,
+  });
+  const memoryFiles = usePollingResource({
+    load: api.loadMemoryFiles,
+    intervalMs: 30000,
+    enabled: route === "knowledge" || deferredCommandOverview,
+    initialDelayMs: route === "knowledge" ? 0 : 1500,
+  });
+  const routingRequests = usePollingResource({
+    load: api.loadRoutingRequests,
+    intervalMs: 30000,
+    enabled: route === "command" || route === "approvals",
+    initialDelayMs: 200,
+  });
 
   const lastUpdated = useMemo(() => {
-    const timestamps = [command.data, buildLab.data, runtime.data, org.data, briefing.data, briefingArchive.data, cronHealth.data, memoryFiles.data]
+    const timestamps = [command.data, buildLab.data, runtime.data, org.data, briefing.data, briefingArchive.data, cronHealth.data, memoryFiles.data, routingRequests.data]
       .map((entry) => entry?.generatedAt)
       .filter(Boolean) as string[];
     const sorted = timestamps.sort();
     return sorted.length ? sorted[sorted.length - 1] : null;
-  }, [briefing.data, briefingArchive.data, buildLab.data, command.data, cronHealth.data, memoryFiles.data, org.data, runtime.data]);
+  }, [briefing.data, briefingArchive.data, buildLab.data, command.data, cronHealth.data, memoryFiles.data, org.data, routingRequests.data, runtime.data]);
+
+  const navSignals = useMemo(() => {
+    const commandData = command.data?.data as CommandPayload | undefined;
+    const commandTasks = commandData?.tasks ?? [];
+    const commandBlocked = commandTasks.filter((task) => task.blocked).length;
+    const commandActive = commandTasks.filter((task) => task.status === "active").length;
+
+    const orgData = org.data?.data as OrgPayload | undefined;
+    const chiefSummary = orgData?.summary?.chiefs;
+    const chiefsOnline = chiefSummary?.online ?? 0;
+    const chiefsTotal = chiefSummary?.total ?? 0;
+
+    const briefArchiveData = briefingArchive.data?.data as BriefingArchivePayload | undefined;
+    const cronData = cronHealth.data?.data as CronHealthPayload | undefined;
+    const failedJobs = cronData?.stats?.failed ?? 0;
+
+    const buildLabData = buildLab.data?.data as BuildLabPayload | undefined;
+    const runningPrototypes = buildLabData?.prototypes?.stats?.running ?? 0;
+    const researchRecords = buildLabData?.research?.summary?.totalRecords ?? 0;
+
+    const runtimeData = runtime.data?.data as RuntimePayload | undefined;
+    const runtimeDisconnected = (runtimeData?.sources ?? []).filter((source) => source.state === "disconnected").length;
+    const runtimeHealthIssues = (runtimeData?.health?.rows ?? []).filter((item) => item.status !== "healthy").length;
+
+    const approvalData = routingRequests.data?.data as RoutingRequestPayload | undefined;
+    const pendingApprovals = approvalData?.stats.pending ?? 0;
+    const rejectedApprovals = approvalData?.stats.rejected ?? 0;
+
+    return {
+      command: {
+        primary: `${commandTasks.length} tasks`,
+        secondary: commandBlocked ? `${commandBlocked} blocked` : `${commandActive} active`,
+        tone: commandBlocked ? "alert" : commandActive ? "ok" : "neutral",
+      },
+      approvals: {
+        primary: `${pendingApprovals} pending`,
+        secondary: rejectedApprovals ? `${rejectedApprovals} rejected` : `${approvalData?.stats.applied ?? 0} applied`,
+        tone: pendingApprovals ? "alert" : approvalData ? "ok" : "neutral",
+      },
+      "org-chart": {
+        primary: chiefsTotal ? `${chiefsOnline}/${chiefsTotal} chiefs online` : "Org loading",
+        secondary: orgData ? `${orgData.summary.openBlockerCount} blockers` : "Awaiting board link",
+        tone: chiefsTotal === 0 ? "warn" : chiefsOnline > 0 ? "ok" : "warn",
+      },
+      knowledge: {
+        primary: `${briefArchiveData?.items?.length ?? 0} records`,
+        secondary: failedJobs ? `${failedJobs} cron failures` : "Scheduler steady",
+        tone: failedJobs ? "alert" : briefArchiveData ? "ok" : "neutral",
+      },
+      "build-lab": {
+        primary: `${runningPrototypes} running tracks`,
+        secondary: `${researchRecords} research records`,
+        tone: runningPrototypes > 0 ? "ok" : buildLabData ? "neutral" : "warn",
+      },
+      runtime: {
+        primary: runtimeDisconnected ? `${runtimeDisconnected} disconnected` : "Sources live",
+        secondary: runtimeHealthIssues ? `${runtimeHealthIssues} health issues` : `${runtimeData?.sessions?.rows?.length ?? 0} sessions`,
+        tone: runtimeDisconnected || runtimeHealthIssues ? "alert" : runtimeData ? "ok" : "warn",
+      },
+    } as const;
+  }, [briefingArchive.data?.data, buildLab.data?.data, command.data?.data, cronHealth.data?.data, org.data?.data, routingRequests.data?.data, runtime.data?.data]);
 
   const activeView = (() => {
     if (route === "org-chart") {
@@ -46,24 +151,23 @@ export default function App() {
     }
     if (route === "command") {
       return (
-        <ModuleGate
-          label="Command"
-          resource={command}
-          render={(payload) => (
-            <CommandPage
-              payload={payload.data as CommandPayload}
-              buildLab={buildLab as any}
-              runtime={runtime as any}
-              org={org as any}
-              briefing={briefing as any}
-              briefingArchive={briefingArchive as any}
-              cronHealth={cronHealth as any}
-              memoryFiles={memoryFiles as any}
-              reloadBoard={command.reload}
-            />
-          )}
+        <CommandPage
+          payload={command.data?.data as CommandPayload | undefined}
+          commandState={command as any}
+          buildLab={buildLab as any}
+          runtime={runtime as any}
+          org={org as any}
+          briefing={briefing as any}
+          briefingArchive={briefingArchive as any}
+          cronHealth={cronHealth as any}
+          memoryFiles={memoryFiles as any}
+          routingRequests={routingRequests as any}
+          reloadBoard={command.reload}
         />
       );
+    }
+    if (route === "approvals") {
+      return <ApprovalsPage routingRequests={routingRequests as any} />;
     }
     if (route === "knowledge") {
       return <KnowledgePage org={org as any} />;
@@ -75,10 +179,27 @@ export default function App() {
   })();
 
   return (
-    <AppShell route={route} onNavigate={navigate} lastUpdated={lastUpdated}>
+    <AppShell route={route} onNavigate={navigate} lastUpdated={lastUpdated} navSignals={navSignals}>
       {activeView}
     </AppShell>
   );
+}
+
+function useDeferredActivation(active: boolean, delayMs: number) {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    if (active) {
+      setEnabled(false);
+      const timer = window.setTimeout(() => setEnabled(true), delayMs);
+      return () => window.clearTimeout(timer);
+    }
+
+    setEnabled(false);
+    return undefined;
+  }, [active, delayMs]);
+
+  return enabled;
 }
 
 function ModuleGate<T>({

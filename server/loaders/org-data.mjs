@@ -1,7 +1,6 @@
 import os from "node:os";
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { runOpenClawJson } from "../lib/cli.mjs";
 import { readJson, resolveRepoRoot, toIso } from "../lib/fs-utils.mjs";
 import { loadProjectBoardPayload } from "../lib/project-board.mjs";
 import { loadStandupArchiveData } from "./standup-data.mjs";
@@ -204,7 +203,7 @@ function recentStandupActivity(standupState) {
   };
 }
 
-function buildRuntimeState(member, matchedAgent, heartbeatByAgentId, sessionsResult) {
+function buildRuntimeState(member, matchedAgent, sessionsResult) {
   const configuredModel = normalizeText(matchedAgent?.model?.primary) || null;
   if (!matchedAgent) {
     return {
@@ -232,10 +231,11 @@ function buildRuntimeState(member, matchedAgent, heartbeatByAgentId, sessionsRes
     };
   }
 
-  const sessions = Array.isArray(sessionsResult.value?.sessions) ? sessionsResult.value.sessions : [];
-  const latest = sessions
+  const sessions = sessionsResult.status === "fulfilled" && Array.isArray(sessionsResult.value?.sessions) ? sessionsResult.value.sessions : [];
+  const latestFromSessions = sessions
     .filter((session) => normalizeText(session.agentId) === matchedAgent.id)
     .sort((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null;
+  const latest = latestFromSessions;
 
   if (!latest) {
     return {
@@ -250,8 +250,7 @@ function buildRuntimeState(member, matchedAgent, heartbeatByAgentId, sessionsRes
     };
   }
 
-  const heartbeatConfig = heartbeatByAgentId.get(matchedAgent.id) || null;
-  const thresholdMs = onlineThresholdMs(heartbeatConfig);
+  const thresholdMs = onlineThresholdMs(null);
   const ageMs = sessionAgeMs(latest);
   const sessionModel = combinedModelLabel(latest.model, latest.modelProvider);
   const lastSeen = maybeIso(latest.updatedAt);
@@ -275,21 +274,43 @@ function settle(promise) {
   return promise.then((value) => ({ status: "fulfilled", value })).catch((reason) => ({ status: "rejected", reason }));
 }
 
+async function loadAgentSessions(configAgents = []) {
+  const sessions = [];
+  for (const agent of configAgents) {
+    const sessionPath = path.join(os.homedir(), ".openclaw", "agents", agent.id, "sessions", "sessions.json");
+    if (!existsSync(sessionPath)) continue;
+
+    try {
+      const payload = await readJson(sessionPath);
+      const sessionEntries = Array.isArray(payload?.sessions)
+        ? payload.sessions
+        : Object.values(payload || {}).filter((value) => value && typeof value === "object");
+      for (const session of sessionEntries) {
+        sessions.push({
+          ...session,
+          agentId: session.agentId || agent.id,
+        });
+      }
+    } catch {
+      // Keep the org surface truthful but resilient when one per-agent session store is unreadable.
+    }
+  }
+
+  return { sessions };
+}
+
 export async function loadOrgData() {
-  const [org, board, standups, configResult, sessionsResult, statusResult] = await Promise.all([
+  const [org, board, standups, configResult] = await Promise.all([
     readJson(orgChartPath),
     loadProjectBoardPayload(),
     loadStandupArchiveData(),
     settle(readOpenClawConfigSafe()),
-    settle(runOpenClawJson(["sessions", "--json"])),
-    settle(runOpenClawJson(["status", "--json"])),
   ]);
 
   const config = configResult.status === "fulfilled" ? configResult.value.data : null;
   const configPath = configResult.status === "fulfilled" ? configResult.value.path : null;
   const configAgents = Array.isArray(config?.agents?.list) ? config.agents.list : [];
-  const heartbeatAgents = statusResult.status === "fulfilled" ? statusResult.value?.heartbeat?.agents || [] : [];
-  const heartbeatByAgentId = new Map(heartbeatAgents.map((entry) => [entry.agentId, entry]));
+  const sessionsResult = await settle(loadAgentSessions(configAgents));
   const latestStandup = standups.items?.[0] || null;
   const latestStandupSummary = latestStandup
     ? {
@@ -332,7 +353,9 @@ export async function loadOrgData() {
 
   const members = [...aiMembers, ...humanMembers].map((member) => {
     const matchedAgent = member.memberKind === "ai" ? findMatchingAgent(member, configAgents) : null;
-    const runtime = member.memberKind === "ai" ? buildRuntimeState(member, matchedAgent, heartbeatByAgentId, sessionsResult) : null;
+    const runtime = member.memberKind === "ai"
+      ? buildRuntimeState(member, matchedAgent, sessionsResult)
+      : null;
 
     const relevantActorIds = new Set([member.id]);
     if (member.isChief) {
@@ -362,10 +385,10 @@ export async function loadOrgData() {
     };
 
     const sessionPayload = sessionsResult.status === "fulfilled" ? sessionsResult.value : null;
-    const latestSession = matchedAgent && sessionPayload
-      ? (sessionPayload.sessions || [])
+    const latestSession = matchedAgent
+      ? ((sessionPayload?.sessions || [])
           .filter((session) => normalizeText(session.agentId) === matchedAgent.id)
-          .sort((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null
+          .sort((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null)
       : null;
 
     const activityItems = [

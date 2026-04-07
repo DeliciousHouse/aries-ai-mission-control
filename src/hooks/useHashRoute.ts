@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RouteId } from "../types";
 
-const validRoutes = new Set<RouteId>(["org-chart", "command", "knowledge", "build-lab", "runtime"]);
+const validRoutes = new Set<RouteId>(["org-chart", "command", "approvals", "knowledge", "build-lab", "runtime"]);
 
 function parseHashRoute(): RouteId {
   const raw = window.location.hash.replace(/^#\/?/, "").trim();

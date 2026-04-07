@@ -19,7 +19,7 @@ export function RuntimePage({ payload }: Props) {
   const recentFailures = payload.tasks.rows.filter((task) => task.failureReason).slice(0, 4);
 
   return (
-    <section className="page-stack">
+    <section className="page-stack accent-ops">
       <header className="page-header panel">
         <div>
           <p className="eyebrow">Runtime</p>

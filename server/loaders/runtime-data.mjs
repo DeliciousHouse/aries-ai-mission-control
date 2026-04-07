@@ -1,5 +1,9 @@
+import os from "node:os";
+import path from "node:path";
 import { runOpenClawJson } from "../lib/cli.mjs";
-import { toIso } from "../lib/fs-utils.mjs";
+import { readJson, toIso } from "../lib/fs-utils.mjs";
+
+const openclawConfigPath = path.join(os.homedir(), ".openclaw", "openclaw.json");
 
 function settledToSource(id, label, command, result) {
   const checkedAt = toIso(Date.now());
@@ -73,80 +77,72 @@ async function settle(commandArgs) {
   }
 }
 
+async function settleFromPromise(promise) {
+  try {
+    const value = await promise;
+    return { status: "fulfilled", value };
+  } catch (reason) {
+    return { status: "rejected", reason };
+  }
+}
+
+async function loadConfigSessions() {
+  const config = await readJson(openclawConfigPath);
+  const agents = Array.isArray(config?.agents?.list) ? config.agents.list : [];
+  const rows = [];
+
+  for (const agent of agents) {
+    const sessionPath = path.join(os.homedir(), ".openclaw", "agents", agent.id, "sessions", "sessions.json");
+    try {
+      const payload = await readJson(sessionPath);
+      const sessionEntries = Array.isArray(payload?.sessions)
+        ? payload.sessions
+        : Object.values(payload || {}).filter((value) => value && typeof value === "object");
+      for (const session of sessionEntries) {
+        rows.push({
+          id: session.sessionId || session.key,
+          sessionKey: session.key,
+          sessionType: normalizeSessionType(session.key),
+          initiator: session.agentId || agent.id || null,
+          startedAt: typeof session.startedAt === "number" ? toIso(session.startedAt) : null,
+          updatedAt: typeof session.updatedAt === "number" ? toIso(session.updatedAt) : null,
+          ageMinutes: typeof session.ageMs === "number" ? session.ageMs / 60000 : null,
+          currentState: normalizeSessionState(session.ageMs),
+          model: session.model || agent.model?.primary || null,
+          provider: session.modelProvider || null,
+          tokenTotal: typeof session.totalTokens === "number" ? session.totalTokens : null,
+        });
+      }
+    } catch {
+      // Missing or unreadable session stores stay unavailable without failing the whole endpoint.
+    }
+  }
+
+  return {
+    config,
+    rows: rows.sort((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0)),
+  };
+}
+
 export async function loadRuntimeData() {
   const freshness = toIso(Date.now());
 
   const [
     sessionsResult,
-    tasksResult,
-    flowsResult,
-    cronStatusResult,
     cronListResult,
     healthResult,
-    modelsResult,
-    usageCostResult,
   ] = await Promise.all([
-    settle(["sessions", "--json"]),
-    settle(["tasks", "list", "--json"]),
-    settle(["tasks", "flow", "list", "--json"]),
-    settle(["cron", "status", "--json"]),
+    settleFromPromise(loadConfigSessions()),
     settle(["cron", "list", "--all", "--json"]),
     settle(["health", "--json"]),
-    settle(["models", "status", "--json"]),
-    settle(["gateway", "usage-cost", "--json"]),
   ]);
 
-  const sessionsPayload = sessionsResult.status === "fulfilled" ? sessionsResult.value : { sessions: [] };
-  const sessionRows = (sessionsPayload.sessions || []).map((session) => ({
-    id: session.sessionId || session.key,
-    sessionKey: session.key,
-    sessionType: normalizeSessionType(session.key),
-    initiator: session.agentId || null,
-    startedAt: null,
-    updatedAt: typeof session.updatedAt === "number" ? toIso(session.updatedAt) : null,
-    ageMinutes: typeof session.ageMs === "number" ? session.ageMs / 60000 : null,
-    currentState: normalizeSessionState(session.ageMs),
-    model: session.model || null,
-    provider: session.modelProvider || null,
-    tokenTotal: typeof session.totalTokens === "number" ? session.totalTokens : null,
-  }));
+  const sessionsPayload = sessionsResult.status === "fulfilled" ? sessionsResult.value : { rows: [], config: null };
+  const sessionRows = sessionsPayload.rows || [];
 
   const sessionModelByKey = new Map(sessionRows.map((row) => [row.sessionKey, row]));
 
-  const tasksPayload = tasksResult.status === "fulfilled" ? tasksResult.value : { tasks: [] };
-  const taskRows = (tasksPayload.tasks || []).map((task) => {
-    const linkedSession = task.childSessionKey ? sessionModelByKey.get(task.childSessionKey) : null;
-    return {
-      id: task.taskId,
-      label: task.label || task.task || task.taskId,
-      runtime: task.runtime || "unknown",
-      status: task.status || "unknown",
-      agentId: task.agentId || null,
-      childSessionKey: task.childSessionKey || null,
-      startedAt: typeof task.startedAt === "number" ? toIso(task.startedAt) : null,
-      endedAt: typeof task.endedAt === "number" ? toIso(task.endedAt) : null,
-      durationMs:
-        typeof task.startedAt === "number" && typeof task.endedAt === "number"
-          ? task.endedAt - task.startedAt
-          : null,
-      latestStatus: task.status || "unknown",
-      failureReason: task.error || task.terminalSummary || null,
-      model: linkedSession?.model || null,
-      provider: linkedSession?.provider || null,
-    };
-  });
-
-  const flowsPayload = flowsResult.status === "fulfilled" ? flowsResult.value : { flows: [] };
-  const flowRows = (flowsPayload.flows || []).map((flow) => ({
-    id: flow.flowId || flow.id,
-    ownerKey: flow.ownerKey || null,
-    status: flow.status || null,
-    startedAt: typeof flow.startedAt === "number" ? toIso(flow.startedAt) : null,
-    updatedAt: typeof flow.updatedAt === "number" ? toIso(flow.updatedAt) : null,
-    stage: flow.stage || flow.state || null,
-    relatedTaskId: flow.linkedTaskId || null,
-    relatedSessionKey: flow.linkedSessionKey || null,
-  }));
+  const taskRows = [];
 
   const cronListPayload = cronListResult.status === "fulfilled" ? cronListResult.value : { jobs: [] };
   const cronRows = (cronListPayload.jobs || []).map((job) => ({
@@ -162,8 +158,6 @@ export async function loadRuntimeData() {
       typeof job.state?.consecutiveErrors === "number" ? job.state.consecutiveErrors : null,
   }));
 
-  const modelsPayload = modelsResult.status === "fulfilled" ? modelsResult.value : {};
-  const usageCostPayload = usageCostResult.status === "fulfilled" ? usageCostResult.value : { totals: {} };
   const modelUsageRows = sessionRows
     .filter((row) => row.model && row.provider)
     .slice(0, 20)
@@ -199,14 +193,17 @@ export async function loadRuntimeData() {
   ];
 
   const sources = [
-    settledToSource("sessions", "Sessions", "openclaw sessions --json", sessionsResult),
-    settledToSource("tasks", "Tasks", "openclaw tasks list --json", tasksResult),
-    settledToSource("flows", "TaskFlow / Lobster flows", "openclaw tasks flow list --json", flowsResult),
-    settledToSource("cron-status", "Cron status", "openclaw cron status --json", cronStatusResult),
+    settledToSource("sessions", "Sessions", "per-agent session stores (~/.openclaw/agents/*/sessions/sessions.json)", sessionsResult),
+    {
+      id: "tasks",
+      label: "Tasks",
+      command: "not loaded on the fast runtime path",
+      state: "disconnected",
+      detail: "Detailed task rows are intentionally removed from the fast runtime endpoint because the current task-source commands exceed the route timeout budget.",
+    },
     settledToSource("cron-list", "Cron jobs", "openclaw cron list --all --json", cronListResult),
     settledToSource("health", "Health", "openclaw health --json", healthResult),
-    settledToSource("models", "Model config", "openclaw models status --json", modelsResult),
-    settledToSource("usage-cost", "Usage cost", "openclaw gateway usage-cost --json", usageCostResult),
+    settledToSource("models", "Model config", "~/.openclaw/openclaw.json + session metadata", sessionsResult),
   ];
 
   return {
@@ -222,22 +219,14 @@ export async function loadRuntimeData() {
       rows: sessionRows,
     },
     tasks: {
-      state: connectionState(tasksResult, taskRows),
-      detail: commandDetail(
-        tasksResult,
-        "Durable background task state loaded from the OpenClaw task store.",
-        "Task source is connected but currently empty.",
-      ),
+      state: "disconnected",
+      detail: "Detailed task rows are deferred from the fast runtime path because the current CLI task sources exceed the endpoint timeout budget. The shell remains usable and the source is reported as unavailable instead of timing out the whole page.",
       rows: taskRows,
     },
     flows: {
-      state: connectionState(flowsResult, flowRows),
-      detail: commandDetail(
-        flowsResult,
-        "TaskFlow state is connected through the CLI flow list.",
-        "No TaskFlow / Lobster flows are currently exposed by the connected source.",
-      ),
-      rows: flowRows,
+      state: "disconnected",
+      detail: "Flow rows are intentionally removed from the fast initial runtime path because the current CLI flow list exceeds the endpoint timeout budget. This surface now degrades truthfully instead of timing out the whole page.",
+      rows: [],
     },
     cron: {
       state: cronListResult.status === "fulfilled" ? (cronRows.length ? "connected" : "empty") : "disconnected",
@@ -250,27 +239,25 @@ export async function loadRuntimeData() {
       rows: cronRows,
     },
     modelUsage: {
-      state: modelsResult.status === "fulfilled" ? (modelUsageRows.length ? "connected" : "empty") : "disconnected",
+      state: sessionsResult.status === "fulfilled" ? (modelUsageRows.length ? "connected" : "empty") : "disconnected",
       detail:
-        modelsResult.status === "fulfilled"
+        sessionsResult.status === "fulfilled"
           ? modelUsageRows.length
-            ? "Model usage rows are derived from live session metadata plus configured model state."
+            ? "Model usage rows are derived from per-agent session metadata plus configured model defaults."
             : "Model config is available, but no current session-linked model activity was detected."
-          : modelsResult.reason instanceof Error
-            ? modelsResult.reason.message
+          : sessionsResult.reason instanceof Error
+            ? sessionsResult.reason.message
             : "Model usage source unavailable.",
-      configuredDefault: modelsPayload.resolvedDefault || modelsPayload.defaultModel || null,
-      configuredFallbacks: Array.isArray(modelsPayload.fallbacks) ? modelsPayload.fallbacks : [],
+      configuredDefault: sessionsPayload.config?.defaults?.model || sessionsPayload.config?.defaultModel || null,
+      configuredFallbacks: Array.isArray(sessionsPayload.config?.defaults?.fallbacks)
+        ? sessionsPayload.config.defaults.fallbacks
+        : Array.isArray(sessionsPayload.config?.fallbacks)
+          ? sessionsPayload.config.fallbacks
+          : [],
       rows: modelUsageRows,
       usageCost: {
-        totalCost:
-          typeof usageCostPayload?.totals?.totalCost === "number"
-            ? usageCostPayload.totals.totalCost
-            : null,
-        totalTokens:
-          typeof usageCostPayload?.totals?.totalTokens === "number"
-            ? usageCostPayload.totals.totalTokens
-            : null,
+        totalCost: null,
+        totalTokens: null,
       },
     },
     health: {

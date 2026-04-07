@@ -399,6 +399,8 @@ function normalizeTaskForStorage(rawTask, directory, actor, options = {}) {
   assertEnum(systemScope, PROJECT_BOARD_SYSTEM_SCOPES, "systemScope");
   assertEnum(executionMode, PROJECT_BOARD_EXECUTION_MODES, "executionMode");
 
+  const existingForceHistory = Array.isArray(rawTask.forcedActionHistory) ? rawTask.forcedActionHistory : [];
+
   const baseTask = {
     id,
     title,
@@ -426,9 +428,18 @@ function normalizeTaskForStorage(rawTask, directory, actor, options = {}) {
     nextAction,
     sourceRefs,
     dueDate,
+    forcedActionHistory: existingForceHistory,
   };
 
-  const assignee = ensureValidAssignment(baseTask, directory);
+  let assignee;
+  if (options.forceAction) {
+    assignee = directory.byId.get(baseTask.assigneeId);
+    if (!assignee) {
+      throw validationError(`Unknown assignee: ${baseTask.assigneeId}.`, { field: "assigneeId" });
+    }
+  } else {
+    assignee = ensureValidAssignment(baseTask, directory);
+  }
 
   const normalizedTask = {
     ...baseTask,
@@ -437,6 +448,7 @@ function normalizeTaskForStorage(rawTask, directory, actor, options = {}) {
     allowedAssigneeTypes: allowedAssigneeTypesFor(baseTask, directory),
     notes: [...initialNotes],
     statusHistory: [...existingHistory],
+    forcedActionHistory: [...existingForceHistory],
   };
 
   if (options.isCreate && !normalizedTask.statusHistory.length) {
@@ -702,6 +714,12 @@ export async function updateProjectBoardTask(taskId, input) {
     updatedBy: actorRef(actor),
   };
 
+  const isForce = Boolean(input.forceAction);
+  const forceReason = asTrimmedString(input.forceReason);
+  if (isForce && !forceReason) {
+    throw validationError("forceReason is required when forceAction is true.", { field: "forceReason" });
+  }
+
   const normalized = normalizeTaskForStorage(candidate, directory, actor, {
     now,
     createdAt: current.createdAt,
@@ -710,6 +728,7 @@ export async function updateProjectBoardTask(taskId, input) {
     appendNote: true,
     note: input.note,
     existingTasks: record.tasks,
+    forceAction: isForce,
   });
 
   if (normalized.status !== current.status) {
@@ -721,6 +740,34 @@ export async function updateProjectBoardTask(taskId, input) {
       toStatus: normalized.status,
       note: asOptionalString(input.note),
     });
+  }
+
+  if (isForce && forceReason) {
+    const actions = [];
+    if (input.updates?.assigneeId && input.updates.assigneeId !== current.assigneeId) {
+      actions.push({ action: "force-assign", fromValue: current.assigneeId, toValue: input.updates.assigneeId });
+    }
+    if (input.updates?.status && input.updates.status !== current.status) {
+      actions.push({ action: "force-status", fromValue: current.status, toValue: input.updates.status });
+    }
+    if (input.updates?.priority && input.updates.priority !== current.priority) {
+      actions.push({ action: "force-priority", fromValue: current.priority, toValue: input.updates.priority });
+    }
+    if (!actions.length) {
+      actions.push({ action: "force-update", fromValue: null, toValue: null });
+    }
+    for (const entry of actions) {
+      normalized.forcedActionHistory.push({
+        id: `force-${Date.parse(now) || Date.now()}-${entry.action}`,
+        timestamp: now,
+        actorId: actor.id,
+        actorDisplayName: actor.displayName,
+        action: entry.action,
+        reason: forceReason,
+        fromValue: entry.fromValue,
+        toValue: entry.toValue,
+      });
+    }
   }
 
   normalized.createdBy = current.createdBy;

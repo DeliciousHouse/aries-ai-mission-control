@@ -1,4 +1,17 @@
-export type RouteId = "org-chart" | "command" | "knowledge" | "build-lab" | "runtime";
+export type RouteId = "org-chart" | "command" | "approvals" | "knowledge" | "build-lab" | "runtime";
+
+export type ModuleId = "ops" | "brain" | "lab";
+
+export type ModuleDefinition = {
+  id: ModuleId;
+  name: string;
+  eyebrow: string;
+  summary: string;
+  context: string;
+  icon: unknown;
+  accent: string;
+  glow: string;
+};
 
 export type ConnectionState = "loading" | "connected" | "disconnected" | "empty" | "error";
 
@@ -99,6 +112,18 @@ export type ProjectBoardTask = {
   routingRule: string;
   stale: boolean;
   staleDays: number;
+  forcedActionHistory: ProjectBoardForceActionEntry[];
+};
+
+export type ProjectBoardForceActionEntry = {
+  id: string;
+  timestamp: string;
+  actorId: string;
+  actorDisplayName: string;
+  action: string;
+  reason: string;
+  fromValue: string | null;
+  toValue: string | null;
 };
 
 export type CommandLinkedRecord = {
@@ -836,4 +861,86 @@ export type OrgPayload = {
   };
   latestStandup: OrgLatestStandupSummary | null;
   members: OrgMemberRecord[];
+};
+
+export type RoutingRequestStatus = "pending" | "approved" | "rejected" | "expired" | "applied";
+
+export type RoutingRequestAuditEntry = {
+  id: string;
+  timestamp: string;
+  actorId: string;
+  actorDisplayName: string;
+  action: string;
+  note: string;
+  status: RoutingRequestStatus | null;
+  metadata: Record<string, unknown> | null;
+};
+
+export type RoutingRequestNotification = {
+  channel: string;
+  status: string;
+  attemptedAt: string | null;
+  deliveredAt: string | null;
+  target: string | null;
+  lastError: string | null;
+  command: string | null;
+  stdout?: string | null;
+  stderr?: string | null;
+};
+
+export type RoutingRequest = {
+  id: string;
+  dedupeKey: string;
+  createdAt: string;
+  updatedAt: string;
+  sourceType: string;
+  sourceChiefId: string;
+  sourceAgentId: string;
+  sourceRecordId: string;
+  sourceReport: Record<string, unknown> | null;
+  relatedTaskId: string | null;
+  relatedTaskTitle: string | null;
+  boardPath: string;
+  requestType: string;
+  requestedAction: string;
+  beforeState: Record<string, unknown>;
+  proposedState: Record<string, unknown>;
+  reason: string;
+  humanDependency: Record<string, unknown> | null;
+  requiresApproval: boolean;
+  approvalTarget: string;
+  approvalLink: string | null;
+  status: RoutingRequestStatus;
+  decisionAt: string | null;
+  decisionBy: string | null;
+  decisionNote: string | null;
+  appliedAt: string | null;
+  returnPath: Record<string, unknown> | null;
+  notification: RoutingRequestNotification | null;
+  auditTrail: RoutingRequestAuditEntry[];
+};
+
+export type RoutingRequestPayload = {
+  source: {
+    kind: string;
+    updatedAt: string;
+    path: string;
+    boardPath: string;
+  };
+  stats: {
+    total: number;
+    pending: number;
+    applied: number;
+    rejected: number;
+    approvalRequired: number;
+    telegramDelivered: number;
+    telegramUnavailable: number;
+  };
+  filterOptions: {
+    statuses: RoutingRequestStatus[];
+    chiefs: string[];
+    requestTypes: string[];
+    tasks: string[];
+  };
+  requests: RoutingRequest[];
 };
