@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -9,11 +10,17 @@ const MAX_BUFFER = 1024 * 1024 * 8;
 
 function resolveOpenClawBin() {
   if (process.env.OPENCLAW_BIN) return process.env.OPENCLAW_BIN;
+  return "openclaw";
+}
 
+function resolveLegacyBundledOpenClawBin() {
   const localBin = path.resolve(process.cwd(), "node_modules/.bin/openclaw");
   if (existsSync(localBin)) return localBin;
+  return null;
+}
 
-  return "openclaw";
+function resolveOpenClawCommandCwd() {
+  return process.env.OPENCLAW_HOME || os.homedir();
 }
 
 function parseJsonCandidate(text) {
@@ -49,6 +56,20 @@ async function runOpenClawCommand(args, { timeout = DEFAULT_TIMEOUT } = {}) {
     timeout,
     maxBuffer: MAX_BUFFER,
     env: process.env,
+    cwd: resolveOpenClawCommandCwd(),
+  });
+}
+
+async function runLegacyBundledOpenClawCommand(args, { timeout = DEFAULT_TIMEOUT } = {}) {
+  const legacyBin = resolveLegacyBundledOpenClawBin();
+  if (!legacyBin || legacyBin === resolveOpenClawBin()) {
+    return null;
+  }
+  return execFileAsync(legacyBin, args, {
+    timeout,
+    maxBuffer: MAX_BUFFER,
+    env: process.env,
+    cwd: resolveOpenClawCommandCwd(),
   });
 }
 
@@ -63,6 +84,12 @@ export async function runOpenClawJson(args, { timeout = DEFAULT_TIMEOUT } = {}) 
     const stderr = typeof error?.stderr === "string" ? error.stderr.trim() : "";
     const parsed = parseJsonCandidate(stdout) ?? parseJsonCandidate(stderr);
     if (parsed !== null) return parsed;
+
+    const fallback = await runLegacyBundledOpenClawCommand(args, { timeout }).catch(() => null);
+    if (fallback) {
+      const parsedFallback = parseJsonCandidate(fallback.stdout) ?? parseJsonCandidate(fallback.stderr);
+      if (parsedFallback !== null) return parsedFallback;
+    }
 
     const detail = [stderr, stdout].filter(Boolean).join(" | ") || error.message;
     const wrapped = new Error(detail);

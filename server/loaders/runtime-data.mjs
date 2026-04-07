@@ -4,6 +4,15 @@ import { runOpenClawJson } from "../lib/cli.mjs";
 import { readJson, toIso } from "../lib/fs-utils.mjs";
 
 const openclawConfigPath = path.join(os.homedir(), ".openclaw", "openclaw.json");
+const openclawCronJobsPath = path.join(os.homedir(), ".openclaw", "cron", "jobs.json");
+
+async function loadCronJobsSnapshot() {
+  try {
+    return await readJson(openclawCronJobsPath, { jobs: [] });
+  } catch {
+    return await runOpenClawJson(["cron", "list", "--all", "--json"]);
+  }
+}
 
 function settledToSource(id, label, command, result) {
   const checkedAt = toIso(Date.now());
@@ -133,7 +142,7 @@ export async function loadRuntimeData() {
     healthResult,
   ] = await Promise.all([
     settleFromPromise(loadConfigSessions()),
-    settle(["cron", "list", "--all", "--json"]),
+    settleFromPromise(loadCronJobsSnapshot()),
     settle(["health", "--json"]),
   ]);
 
@@ -201,7 +210,7 @@ export async function loadRuntimeData() {
       state: "disconnected",
       detail: "Detailed task rows are intentionally removed from the fast runtime endpoint because the current task-source commands exceed the route timeout budget.",
     },
-    settledToSource("cron-list", "Cron jobs", "openclaw cron list --all --json", cronListResult),
+    settledToSource("cron-list", "Cron jobs", `cat ${openclawCronJobsPath}`, cronListResult),
     settledToSource("health", "Health", "openclaw health --json", healthResult),
     settledToSource("models", "Model config", "~/.openclaw/openclaw.json + session metadata", sessionsResult),
   ];

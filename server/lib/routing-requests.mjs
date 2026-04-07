@@ -314,42 +314,37 @@ function buildNotificationMessage(request) {
 }
 
 function determineApprovalPolicy({ requestType, beforeState, proposedState, currentTask }) {
-  if (requestType === "jarvis-routing-approval") {
-    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Jarvis routing requests always require explicit approval." };
-  }
-  if (requestType === "brendan-decision-request" || requestType === "dependency-handoff-confirmation") {
-    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Human dependency requests always require Brendan approval." };
-  }
-  if (requestType === "task-reassignment-proposal") {
-    const nextAssignee = normalizeString(proposedState?.assigneeId);
-    const humanAssigneeIds = new Set(["rohan", "roy", "somwya", "brendan"]);
-    if (humanAssigneeIds.has(nextAssignee)) {
-      return { requiresApproval: true, approvalTarget: "brendan", rationale: "Reassignment to a human always requires approval." };
-    }
-    return { requiresApproval: false, approvalTarget: "jarvis", rationale: "AI-only reassignment can auto-apply." };
-  }
-  if (requestType === "status-change-proposal") {
-    const fromStatus = normalizeString(beforeState?.status || currentTask?.status);
-    const toStatus = normalizeString(proposedState?.status);
-    const materialStatuses = new Set(["ready", "active", "review", "shipped", "follow-up"]);
-    if (materialStatuses.has(fromStatus) || materialStatuses.has(toStatus)) {
-      return { requiresApproval: true, approvalTarget: "brendan", rationale: "Material status changes require explicit approval." };
-    }
-    return { requiresApproval: false, approvalTarget: "jarvis", rationale: "Low-risk intake/scoping updates may auto-apply." };
-  }
-  if (requestType === "escalation-proposal") {
-    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Escalations always require explicit approval." };
-  }
-  if (requestType === "priority-bump-proposal") {
-    const nextPriority = normalizeString(proposedState?.priority);
-    if (["P0", "P1"].includes(nextPriority)) {
-      return { requiresApproval: true, approvalTarget: "brendan", rationale: "High-priority bumps require approval." };
-    }
-    return { requiresApproval: false, approvalTarget: "jarvis", rationale: "Low-risk priority changes may auto-apply." };
-  }
-  return { requiresApproval: true, approvalTarget: "brendan", rationale: "Important routing changes default to explicit approval." };
-}
+  const context = [
+    requestType,
+    currentTask?.systemScope,
+    currentTask?.title,
+    currentTask?.description,
+    currentTask?.nextAction,
+    currentTask?.blockerReason,
+    beforeState?.owner,
+    beforeState?.assigneeId,
+    proposedState?.owner,
+    proposedState?.assigneeId,
+  ].filter(Boolean).join("\n");
 
+  if (/\bopenclaw\b|docker-compose|docker compose|compose\.ya?ml|(^|[^a-z])env([^a-z]|$)|\.env\b|environment variable/i.test(context)) {
+    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Protected-system or environment changes require Brendan approval." };
+  }
+
+  if (requestType === "brendan-decision-request") {
+    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Explicit Brendan decision requests stay gated for review." };
+  }
+
+  if (requestType === "dependency-handoff-confirmation") {
+    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Human handoff requests stay gated until Brendan confirms them." };
+  }
+
+  if (/\b(send|message|notify|email|slack|telegram|discord|sms|call|dm)\b/i.test(context) && !/\bbrendan\b/i.test(context)) {
+    return { requiresApproval: true, approvalTarget: "brendan", rationale: "Outbound messages to people other than Brendan require approval." };
+  }
+
+  return { requiresApproval: false, approvalTarget: null, rationale: "Mission Control can apply this change autonomously." };
+}
 function openClawBinaryPath() {
   return process.env.MISSION_CONTROL_OPENCLAW_BIN || "/usr/local/bin/openclaw";
 }
@@ -663,6 +658,32 @@ async function ensureRequestMaterialized(store, candidate) {
   const dedupeKey = dedupeKeyForCandidate(candidate);
   const existing = store.requests.find((request) => request.dedupeKey === dedupeKey);
   if (existing) {
+    if (existing.status === "pending") {
+      const boardRecord = await readBoardFile();
+      const currentTask = existing.relatedTaskId ? findTask(boardRecord, existing.relatedTaskId) : null;
+      const policy = determineApprovalPolicy({
+        requestType: existing.requestType,
+        beforeState: existing.beforeState,
+        proposedState: existing.proposedState,
+        currentTask,
+      });
+      existing.requiresApproval = policy.requiresApproval;
+      existing.approvalTarget = policy.approvalTarget;
+      existing.rationale = policy.rationale;
+      existing.updatedAt = nowIso();
+
+      if (!existing.requiresApproval && currentTask) {
+        await updateProjectBoardTask(existing.relatedTaskId, {
+          updates: taskPatchForRequest(currentTask, existing),
+          actorId: "jarvis",
+        });
+        existing.status = "applied";
+        existing.appliedAt = nowIso();
+        existing.updatedAt = existing.appliedAt;
+      }
+
+      await writeStore(store);
+    }
     return { store, request: existing, created: false };
   }
 
@@ -674,85 +695,45 @@ async function ensureRequestMaterialized(store, candidate) {
     proposedState: candidate.proposedState,
     currentTask,
   });
-  const requestId = `rr_${slugify(candidate.sourceChiefId)}_${hashSeed(`${dedupeKey}:${nowIso()}`)}`;
-  const notificationTarget = await telegramTargetConfig();
-  const request = normalizeRequest({
-    ...candidate,
+  const requestId = `rr_${slugify(candidate.sourceChiefId)}_${hashSeed(`${dedupeKey}:${candidate.summary}`).slice(0, 10)}`;
+  const request = {
     id: requestId,
     dedupeKey,
-    requiresApproval: policy.requiresApproval,
+    requestType: candidate.requestType,
+    status: policy.requiresApproval ? "pending" : "applied",
+    title: candidate.title,
+    summary: candidate.summary,
+    rationale: policy.rationale,
+    proposedState: candidate.proposedState,
+    beforeState: candidate.beforeState,
+    relatedTaskId: candidate.relatedTaskId || null,
+    sourceChiefId: candidate.sourceChiefId,
+    sourceSessionKey: candidate.sourceSessionKey || null,
     approvalTarget: policy.approvalTarget,
-    approvalLink: buildApprovalLink(requestId),
-    notification: {
-      channel: "telegram",
-      status: "pending",
-      attemptedAt: null,
-      deliveredAt: null,
-      target: notificationTarget.target || null,
-      lastError: null,
-      command: null,
-    },
-    auditTrail: [makeAuditEntry({
-      actorId: candidate.sourceAgentId || candidate.sourceChiefId,
-      actorDisplayName: candidate.sourceChiefId,
-      action: "created",
-      note: `${candidate.reason}${policy.rationale ? ` Policy: ${policy.rationale}` : ""}`,
-      status: "pending",
-      metadata: { policy },
-    })],
-  });
+    requiresApproval: policy.requiresApproval,
+    approvalLink: policy.requiresApproval ? buildApprovalLink(requestId) : null,
+    createdAt: timestamp(),
+    updatedAt: timestamp(),
+    expiresAt: null,
+    auditTrail: [],
+    notifiedAt: null,
+    requestedBy: candidate.requestedBy || candidate.sourceChiefId,
+  };
 
-  if (request.requiresApproval) {
-    const notification = await sendTelegramNotification(request);
-    request.notification = notification;
-    request.auditTrail.push(makeAuditEntry({
-      actorId: "system",
-      actorDisplayName: "Mission Control",
-      action: notification.status === "delivered" ? "notification-delivered" : "notification-unavailable",
-      note: notification.lastError || `Telegram delivery ${notification.status}.`,
-      status: request.status,
-      metadata: notification,
-    }));
-  } else {
-    request.notification = {
-      channel: "telegram",
-      status: "skipped",
-      attemptedAt: null,
-      deliveredAt: null,
-      target: null,
-      lastError: null,
-      command: null,
-    };
+  store.requests.unshift(request);
+
+  if (!policy.requiresApproval && currentTask) {
+    await updateProjectBoardTask({
+      taskId: request.relatedTaskId,
+      updates: taskPatchForRequest(currentTask, request),
+      actorId: "jarvis",
+    });
+    request.status = "applied";
+    request.appliedAt = timestamp();
+    request.updatedAt = request.appliedAt;
   }
 
-  store.requests.push(request);
-
-  if (!request.requiresApproval && request.relatedTaskId) {
-    const boardRecord = await readBoardFile();
-    const currentTask = findTask(boardRecord, request.relatedTaskId);
-    if (currentTask) {
-      const patch = taskPatchForRequest(currentTask, request);
-      if (Object.keys(patch).length > 0) {
-        await updateProjectBoardTask(request.relatedTaskId, {
-          actorId: request.approvalTarget || request.sourceChiefId,
-          updates: patch,
-          note: `Auto-applied routing update from ${request.id}: ${request.requestedAction}`,
-        });
-      }
-      request.status = "applied";
-      request.appliedAt = nowIso();
-      request.updatedAt = nowIso();
-      request.auditTrail.push(makeAuditEntry({
-        actorId: request.approvalTarget || request.sourceChiefId,
-        actorDisplayName: request.approvalTarget || request.sourceChiefId,
-        action: "auto-applied",
-        note: "Low-risk routing update auto-applied by policy.",
-        status: "applied",
-        metadata: { patch },
-      }));
-    }
-  }
-
+  await writeStore(store);
   return { store, request, created: true };
 }
 
@@ -814,8 +795,55 @@ export async function ingestChiefReport(reportInput) {
   };
 }
 
+async function reconcileStoredRequests(store) {
+  const boardRecord = await readBoardFile();
+  let changed = false;
+
+  for (const request of store.requests) {
+    if (request.status !== "pending") continue;
+
+    const currentTask = request.relatedTaskId ? findTask(boardRecord, request.relatedTaskId) : null;
+    const policy = determineApprovalPolicy({
+      requestType: request.requestType,
+      beforeState: request.beforeState,
+      proposedState: request.proposedState,
+      currentTask,
+    });
+
+    if (request.requiresApproval !== policy.requiresApproval || request.approvalTarget !== policy.approvalTarget || request.rationale !== policy.rationale) {
+      request.requiresApproval = policy.requiresApproval;
+      request.approvalTarget = policy.approvalTarget;
+      request.rationale = policy.rationale;
+      request.updatedAt = nowIso();
+      changed = true;
+    }
+
+    if (!request.requiresApproval) {
+      if (currentTask) {
+        await updateProjectBoardTask(request.relatedTaskId, {
+          updates: taskPatchForRequest(currentTask, request),
+          actorId: "jarvis",
+        });
+        request.status = "applied";
+        request.appliedAt = nowIso();
+        request.updatedAt = request.appliedAt;
+      } else {
+        request.status = "expired";
+        request.updatedAt = nowIso();
+      }
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await writeStore(store);
+  }
+  return store;
+}
+
 export async function loadRoutingRequestsPayload() {
-  const { store } = await syncRoutingRequestsFromStandups();
+  const { store: syncedStore } = await syncRoutingRequestsFromStandups();
+  const store = await reconcileStoredRequests(syncedStore);
   const requests = [...store.requests].sort((left, right) => (Date.parse(right.updatedAt) || 0) - (Date.parse(left.updatedAt) || 0));
   const chiefs = [...new Set(requests.map((request) => request.sourceChiefId))].sort();
   const requestTypes = [...new Set(requests.map((request) => request.requestType))].sort();

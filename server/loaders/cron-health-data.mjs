@@ -1,5 +1,20 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { runOpenClawJson } from "../lib/cli.mjs";
 import { toIso } from "../lib/fs-utils.mjs";
+
+function resolveCronJobsPath() {
+  return path.join(process.env.OPENCLAW_HOME || os.homedir(), ".openclaw", "cron", "jobs.json");
+}
+
+async function loadCronJobsPayload() {
+  try {
+    return JSON.parse(await fs.readFile(resolveCronJobsPath(), "utf8"));
+  } catch {
+    return await runOpenClawJson(["cron", "list", "--all", "--json"]);
+  }
+}
 
 function toIsoIfNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? toIso(value) : null;
@@ -39,7 +54,7 @@ export async function loadCronHealthData() {
 
   let listPayload;
   try {
-    listPayload = await runOpenClawJson(["cron", "list", "--all", "--json"]);
+    listPayload = await loadCronJobsPayload();
   } catch (error) {
     return {
       stats: { healthy: 0, failed: 0, disabled: 0, unavailable: 0, disconnected: 1 },

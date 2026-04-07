@@ -92,7 +92,7 @@ export async function loadApiPath(pathname, url) {
     return loadEnvelope("api:build-lab:research", 60_000, 8_000, "Build Lab research", loadResearchDashboardSection);
   }
   if (pathname === "/api/app/runtime") {
-    return loadEnvelope("api:runtime", 15_000, 12_000, "Runtime", loadRuntimeData);
+    return loadEnvelope("api:runtime", 15_000, 20_000, "Runtime", loadRuntimeData);
   }
 
   if (pathname === "/api/org") {
@@ -141,7 +141,7 @@ export async function loadApiPath(pathname, url) {
     return loadEnvelope(
       "api:cron-health",
       15_000,
-      5_000,
+      15_000,
       "Cron health",
       loadCronHealthData,
       (data) => data.generatedAt ?? toIso(Date.now()),
