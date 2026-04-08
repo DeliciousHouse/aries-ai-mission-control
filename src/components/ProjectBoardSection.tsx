@@ -47,21 +47,21 @@ const DEFAULT_STATUS_FLOW: ProjectBoardStatus[] = ["intake", "scoping", "ready",
 const DEFAULT_ACTOR_ID = "jarvis";
 
 function filterTask(task: ProjectBoardTask, filters: FilterState) {
-  if (filters.assigneeId !== "all" && task.assigneeId !== filters.assigneeId) return false;
-  if (filters.status !== "all" && task.status !== filters.status) return false;
-  if (filters.priority !== "all" && task.priority !== filters.priority) return false;
-  if (filters.workstream !== "all" && task.workstream !== filters.workstream) return false;
-  if (filters.systemScope !== "all" && task.systemScope !== filters.systemScope) return false;
-  if (filters.taskDomain !== "all" && task.taskDomain !== filters.taskDomain) return false;
-  if (filters.blockedOnly && !task.blocked) return false;
-  if (filters.staleOnly && !task.stale) return false;
+  if (filters.assigneeId !== "all" && task.assigneeId !== filters.assigneeId) {return false;}
+  if (filters.status !== "all" && task.status !== filters.status) {return false;}
+  if (filters.priority !== "all" && task.priority !== filters.priority) {return false;}
+  if (filters.workstream !== "all" && task.workstream !== filters.workstream) {return false;}
+  if (filters.systemScope !== "all" && task.systemScope !== filters.systemScope) {return false;}
+  if (filters.taskDomain !== "all" && task.taskDomain !== filters.taskDomain) {return false;}
+  if (filters.blockedOnly && !task.blocked) {return false;}
+  if (filters.staleOnly && !task.stale) {return false;}
   return true;
 }
 
 function sortByStatus(tasks: ProjectBoardTask[]) {
-  return [...tasks].sort((left, right) => {
+  return [...tasks].toSorted((left, right) => {
     const statusDelta = DEFAULT_STATUS_FLOW.indexOf(left.status) - DEFAULT_STATUS_FLOW.indexOf(right.status);
-    if (statusDelta !== 0) return statusDelta;
+    if (statusDelta !== 0) {return statusDelta;}
     return (Date.parse(right.updatedAt) || 0) - (Date.parse(left.updatedAt) || 0);
   });
 }
@@ -71,41 +71,41 @@ function statusLabel(value: string) {
 }
 
 function systemScopeLabel(value: string) {
-  if (value === "aries-app") return "Aries";
-  if (value === "mission-control") return "MC";
-  if (value === "openclaw") return "OC";
+  if (value === "aries-app") {return "Aries";}
+  if (value === "mission-control") {return "MC";}
+  if (value === "openclaw") {return "OC";}
   return statusLabel(value);
 }
 
 function domainLabel(value: string) {
-  if (value === "runtime-automation") return "Runtime";
-  if (value === "operations-knowledge") return "Ops";
-  if (value === "manual-ops") return "Manual";
-  if (value === "openclaw-change") return "OC";
+  if (value === "runtime-automation") {return "Runtime";}
+  if (value === "operations-knowledge") {return "Ops";}
+  if (value === "manual-ops") {return "Manual";}
+  if (value === "openclaw-change") {return "OC";}
   return statusLabel(value);
 }
 
 function actorTone(actor: ProjectBoardActor | null | undefined) {
-  if (!actor) return "tone-neutral";
-  if (actor.id === "forge") return "tone-forge";
-  if (actor.id === "signal") return "tone-signal";
-  if (actor.id === "ledger") return "tone-ledger";
-  if (actor.id === "jarvis") return "tone-jarvis";
-  if (actor.assigneeType === "human-collaborator") return "tone-human";
+  if (!actor) {return "tone-neutral";}
+  if (actor.id === "forge") {return "tone-forge";}
+  if (actor.id === "signal") {return "tone-signal";}
+  if (actor.id === "ledger") {return "tone-ledger";}
+  if (actor.id === "jarvis") {return "tone-jarvis";}
+  if (actor.assigneeType === "human-collaborator") {return "tone-human";}
   return "tone-neutral";
 }
 
 function ownershipLabel(actor: ProjectBoardActor | null | undefined) {
-  if (!actor) return "Unknown";
-  if (["ai-orchestrator", "chief", "ai-specialist"].includes(actor.assigneeType)) return "AI";
-  if (actor.assigneeType === "human-collaborator") return "Human";
-  if (actor.assigneeType === "human-authority") return "Brendan";
+  if (!actor) {return "Unknown";}
+  if (["ai-orchestrator", "chief", "ai-specialist"].includes(actor.assigneeType)) {return "AI";}
+  if (actor.assigneeType === "human-collaborator") {return "Human";}
+  if (actor.assigneeType === "human-authority") {return "Brendan";}
   return actor.assigneeType;
 }
 
 function executionModeLabel(value: ProjectBoardExecutionMode) {
-  if (value === "brendan-only") return "Brendan-only";
-  if (value === "proposal-for-brendan-review") return "Proposal";
+  if (value === "brendan-only") {return "Brendan-only";}
+  if (value === "proposal-for-brendan-review") {return "Proposal";}
   return "";
 }
 
@@ -126,10 +126,10 @@ export function ProjectBoardSection({ payload, onReload }: Props) {
   );
 
   useEffect(() => {
-    if (selectedTaskId) return;
+    if (selectedTaskId) {return;}
     const params = new URLSearchParams(window.location.search);
     const requestedTaskId = params.get("taskId");
-    if (!requestedTaskId) return;
+    if (!requestedTaskId) {return;}
     if (payload.tasks.some((task) => task.id === requestedTaskId)) {
       setSelectedTaskId(requestedTaskId);
       setCreating(false);
@@ -165,14 +165,14 @@ export function ProjectBoardSection({ payload, onReload }: Props) {
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.assigneeId !== "all") count++;
-    if (filters.status !== "all") count++;
-    if (filters.priority !== "all") count++;
-    if (filters.workstream !== "all") count++;
-    if (filters.systemScope !== "all") count++;
-    if (filters.taskDomain !== "all") count++;
-    if (filters.blockedOnly) count++;
-    if (filters.staleOnly) count++;
+    if (filters.assigneeId !== "all") {count++;}
+    if (filters.status !== "all") {count++;}
+    if (filters.priority !== "all") {count++;}
+    if (filters.workstream !== "all") {count++;}
+    if (filters.systemScope !== "all") {count++;}
+    if (filters.taskDomain !== "all") {count++;}
+    if (filters.blockedOnly) {count++;}
+    if (filters.staleOnly) {count++;}
     return count;
   }, [filters]);
 
@@ -182,19 +182,19 @@ export function ProjectBoardSection({ payload, onReload }: Props) {
       const match = payload.filterOptions.assignees.find((item) => item.value === filters.assigneeId);
       chips.push({ key: "assigneeId", label: `Assignee: ${match?.label || filters.assigneeId}` });
     }
-    if (filters.status !== "all") chips.push({ key: "status", label: `Status: ${statusLabel(filters.status)}` });
-    if (filters.priority !== "all") chips.push({ key: "priority", label: `Priority: ${filters.priority}` });
-    if (filters.workstream !== "all") chips.push({ key: "workstream", label: `Workstream: ${filters.workstream}` });
-    if (filters.systemScope !== "all") chips.push({ key: "systemScope", label: `Scope: ${systemScopeLabel(filters.systemScope)}` });
-    if (filters.taskDomain !== "all") chips.push({ key: "taskDomain", label: `Domain: ${domainLabel(filters.taskDomain)}` });
-    if (filters.blockedOnly) chips.push({ key: "blockedOnly", label: "Blocked only" });
-    if (filters.staleOnly) chips.push({ key: "staleOnly", label: "Stale only" });
+    if (filters.status !== "all") {chips.push({ key: "status", label: `Status: ${statusLabel(filters.status)}` });}
+    if (filters.priority !== "all") {chips.push({ key: "priority", label: `Priority: ${filters.priority}` });}
+    if (filters.workstream !== "all") {chips.push({ key: "workstream", label: `Workstream: ${filters.workstream}` });}
+    if (filters.systemScope !== "all") {chips.push({ key: "systemScope", label: `Scope: ${systemScopeLabel(filters.systemScope)}` });}
+    if (filters.taskDomain !== "all") {chips.push({ key: "taskDomain", label: `Domain: ${domainLabel(filters.taskDomain)}` });}
+    if (filters.blockedOnly) {chips.push({ key: "blockedOnly", label: "Blocked only" });}
+    if (filters.staleOnly) {chips.push({ key: "staleOnly", label: "Stale only" });}
     return chips;
   }, [filters, payload.filterOptions.assignees]);
 
   const handleQuickView = (viewId: string) => {
     const quickView = payload.quickViews.find((item) => item.id === viewId);
-    if (!quickView) return;
+    if (!quickView) {return;}
     setActiveQuickView(viewId);
     setFilters({
       ...DEFAULT_FILTERS,
@@ -384,14 +384,14 @@ export function ProjectBoardSection({ payload, onReload }: Props) {
                     className="filter-chip-remove"
                     aria-label={`Remove ${chip.label}`}
                     onClick={() => {
-                      if (chip.key === "assigneeId") setFilters((c) => ({ ...c, assigneeId: "all" }));
-                      if (chip.key === "status") setFilters((c) => ({ ...c, status: "all" }));
-                      if (chip.key === "priority") setFilters((c) => ({ ...c, priority: "all" }));
-                      if (chip.key === "workstream") setFilters((c) => ({ ...c, workstream: "all" }));
-                      if (chip.key === "systemScope") setFilters((c) => ({ ...c, systemScope: "all" }));
-                      if (chip.key === "taskDomain") setFilters((c) => ({ ...c, taskDomain: "all" }));
-                      if (chip.key === "blockedOnly") setFilters((c) => ({ ...c, blockedOnly: false }));
-                      if (chip.key === "staleOnly") setFilters((c) => ({ ...c, staleOnly: false }));
+                      if (chip.key === "assigneeId") {setFilters((c) => ({ ...c, assigneeId: "all" }));}
+                      if (chip.key === "status") {setFilters((c) => ({ ...c, status: "all" }));}
+                      if (chip.key === "priority") {setFilters((c) => ({ ...c, priority: "all" }));}
+                      if (chip.key === "workstream") {setFilters((c) => ({ ...c, workstream: "all" }));}
+                      if (chip.key === "systemScope") {setFilters((c) => ({ ...c, systemScope: "all" }));}
+                      if (chip.key === "taskDomain") {setFilters((c) => ({ ...c, taskDomain: "all" }));}
+                      if (chip.key === "blockedOnly") {setFilters((c) => ({ ...c, blockedOnly: false }));}
+                      if (chip.key === "staleOnly") {setFilters((c) => ({ ...c, staleOnly: false }));}
                     }}
                   >
                     ×

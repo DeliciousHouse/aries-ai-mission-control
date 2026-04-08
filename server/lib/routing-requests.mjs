@@ -39,7 +39,7 @@ function normalizeString(value, fallback = "") {
 }
 
 function normalizeStringArray(values) {
-  if (!Array.isArray(values)) return [];
+  if (!Array.isArray(values)) {return [];}
   return values.map((value) => normalizeString(value)).filter(Boolean);
 }
 
@@ -108,7 +108,7 @@ function findTask(boardRecord, taskId) {
 
 function buildApprovalLink(requestId) {
   const publicUrl = normalizeString(process.env.MISSION_CONTROL_PUBLIC_URL || process.env.MISSION_CONTROL_BASE_URL);
-  if (!publicUrl) return null;
+  if (!publicUrl) {return null;}
   try {
     const url = new URL(publicUrl);
     url.searchParams.set("commandView", "approvals");
@@ -231,7 +231,7 @@ function normalizeRequest(input) {
 
 function buildBoardTaskLink(taskId) {
   const normalizedTaskId = normalizeString(taskId);
-  if (!normalizedTaskId) return null;
+  if (!normalizedTaskId) {return null;}
   const publicUrl = normalizeString(process.env.MISSION_CONTROL_PUBLIC_URL || process.env.MISSION_CONTROL_BASE_URL);
   if (!publicUrl) {
     return DEFAULT_BOARD_PUBLIC_PATH.replace("%TASK_ID%", encodeURIComponent(normalizedTaskId));
@@ -444,10 +444,10 @@ function sectionLines(markdown, labels) {
     const line = lines[index].trim();
     const lowered = line.replace(/^[-*]\s*/, "").toLowerCase();
     const matched = normalizedLabels.find((label) => lowered.startsWith(`${label.toLowerCase()}:`));
-    if (!matched) continue;
+    if (!matched) {continue;}
     const collected = [];
     const afterColon = line.split(":").slice(1).join(":").trim();
-    if (afterColon) collected.push(afterColon);
+    if (afterColon) {collected.push(afterColon);}
     for (let next = index + 1; next < lines.length; next += 1) {
       const candidate = lines[next];
       if (/^[-*]\s+/.test(candidate.trim())) {
@@ -508,9 +508,9 @@ function deriveCandidatesFromStructuredReport(report, boardRecord) {
 
   const humanDependencies = Array.isArray(report.humanDependencies) ? report.humanDependencies : [];
   humanDependencies.forEach((dependency) => {
-    if (!task) return;
+    if (!task) {return;}
     const summary = normalizeString(dependency.summary || dependency.reason || dependency.note || dependency);
-    if (!summary) return;
+    if (!summary) {return;}
     requests.push({
       sourceType: report.sourceType || "standup",
       sourceChiefId: report.chiefId,
@@ -541,9 +541,9 @@ function deriveCandidatesFromStructuredReport(report, boardRecord) {
 
   const jarvisRouting = Array.isArray(report.needsJarvisRouting) ? report.needsJarvisRouting : [];
   jarvisRouting.forEach((item) => {
-    if (!task) return;
+    if (!task) {return;}
     const summary = normalizeString(item.summary || item.reason || item.note || item);
-    if (!summary) return;
+    if (!summary) {return;}
     requests.push({
       sourceType: report.sourceType || "standup",
       sourceChiefId: report.chiefId,
@@ -572,9 +572,9 @@ function deriveCandidatesFromStructuredReport(report, boardRecord) {
 
   const reassignmentProposals = Array.isArray(report.reassignmentProposals) ? report.reassignmentProposals : [];
   reassignmentProposals.forEach((proposal) => {
-    if (!task) return;
+    if (!task) {return;}
     const assigneeId = normalizeString(proposal.assigneeId);
-    if (!assigneeId || assigneeId === task.assigneeId) return;
+    if (!assigneeId || assigneeId === task.assigneeId) {return;}
     requests.push({
       sourceType: report.sourceType || "standup",
       sourceChiefId: report.chiefId,
@@ -599,9 +599,9 @@ function deriveCandidatesFromStructuredReport(report, boardRecord) {
 
   const priorityBumps = Array.isArray(report.priorityBumps) ? report.priorityBumps : [];
   priorityBumps.forEach((proposal) => {
-    if (!task) return;
+    if (!task) {return;}
     const priority = normalizeString(proposal.priority);
-    if (!priority || priority === task.priority) return;
+    if (!priority || priority === task.priority) {return;}
     requests.push({
       sourceType: report.sourceType || "standup",
       sourceChiefId: report.chiefId,
@@ -746,7 +746,7 @@ export async function syncRoutingRequestsFromStandups() {
   for (const standupItem of standups.items || []) {
     for (const chief of standupItem.chiefs || []) {
       const report = chiefReportFromStandupRecord(standupItem, chief);
-      if (!report) continue;
+      if (!report) {continue;}
       const candidates = deriveCandidatesFromStructuredReport(report, boardRecord);
       for (const candidate of candidates) {
         const result = await ensureRequestMaterialized(store, candidate);
@@ -784,7 +784,7 @@ export async function ingestChiefReport(reportInput) {
   for (const candidate of candidates) {
     const result = await ensureRequestMaterialized(nextStore, candidate);
     nextStore = result.store;
-    if (result.created) created.push(result.request.id);
+    if (result.created) {created.push(result.request.id);}
   }
 
   await writeStore(nextStore);
@@ -800,7 +800,7 @@ async function reconcileStoredRequests(store) {
   let changed = false;
 
   for (const request of store.requests) {
-    if (request.status !== "pending") continue;
+    if (request.status !== "pending") {continue;}
 
     const currentTask = request.relatedTaskId ? findTask(boardRecord, request.relatedTaskId) : null;
     const policy = determineApprovalPolicy({
@@ -844,10 +844,10 @@ async function reconcileStoredRequests(store) {
 export async function loadRoutingRequestsPayload() {
   const { store: syncedStore } = await syncRoutingRequestsFromStandups();
   const store = await reconcileStoredRequests(syncedStore);
-  const requests = [...store.requests].sort((left, right) => (Date.parse(right.updatedAt) || 0) - (Date.parse(left.updatedAt) || 0));
-  const chiefs = [...new Set(requests.map((request) => request.sourceChiefId))].sort();
-  const requestTypes = [...new Set(requests.map((request) => request.requestType))].sort();
-  const tasks = [...new Set(requests.map((request) => request.relatedTaskId).filter(Boolean))].sort();
+  const requests = [...store.requests].toSorted((left, right) => (Date.parse(right.updatedAt) || 0) - (Date.parse(left.updatedAt) || 0));
+  const chiefs = [...new Set(requests.map((request) => request.sourceChiefId))].toSorted();
+  const requestTypes = [...new Set(requests.map((request) => request.requestType))].toSorted();
+  const tasks = [...new Set(requests.map((request) => request.relatedTaskId).filter(Boolean))].toSorted();
   return {
     source: {
       kind: "mission-control-routing-requests",

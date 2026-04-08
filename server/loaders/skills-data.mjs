@@ -29,9 +29,9 @@ function splitFrontmatter(rawContent) {
 
   for (const rawLine of frontmatter.split(/\r?\n/)) {
     const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
+    if (!line || line.startsWith("#")) {continue;}
     const colon = line.indexOf(":");
-    if (colon < 0) continue;
+    if (colon < 0) {continue;}
     const key = line.slice(0, colon).trim();
     const value = line
       .slice(colon + 1)
@@ -64,7 +64,7 @@ function deriveCategory(source, filePath) {
     .replace(base, "")
     .replace(/^\//, "")
     .split("/");
-  if (!remainder.length || !remainder[0]) return null;
+  if (!remainder.length || !remainder[0]) {return null;}
   return remainder[0] || null;
 }
 
@@ -96,12 +96,12 @@ function buildCronLinks(jobs) {
   for (const job of jobs) {
     const jobName = job?.name || job?.id || "Unnamed job";
     const payloadText = JSON.stringify(job?.payload || {});
-    const match = payloadText.match(/"[\/a-zA-Z0-9_-]*skill[a-zA-Z0-9_-]*"\s*:\s*"([a-zA-Z0-9_-]+)"/g);
+    const match = payloadText.match(/"[/a-zA-Z0-9_-]*skill[a-zA-Z0-9_-]*"\s*:\s*"([a-zA-Z0-9_-]+)"/g);
 
     if (match) {
       for (const hit of match) {
         const skill = hit.match(/"[a-zA-Z0-9_-]+"\s*:\s*"([a-zA-Z0-9_-]+)"/)?.[1];
-        if (!skill) continue;
+        if (!skill) {continue;}
         const entry = linksBySkill.get(skill) ?? [];
         entry.push(`Cron: ${jobName}`);
         linksBySkill.set(skill, entry);
@@ -111,7 +111,7 @@ function buildCronLinks(jobs) {
     const quotedWords = payloadText.match(/([a-z0-9-]+(?:_[a-z0-9-]+){0,2})/gi) || [];
     for (const token of quotedWords) {
       const key = token.trim();
-      if (!key.includes("skill")) continue;
+      if (!key.includes("skill")) {continue;}
       const entry = linksBySkill.get(key) ?? [];
       entry.push(`Cron: ${jobName}`);
       linksBySkill.set(key, entry);
@@ -141,7 +141,7 @@ async function readSkillFilesBySource() {
 
   const discovered = [];
   for (const root of roots) {
-    if (!existsSync(root.base)) continue;
+    if (!existsSync(root.base)) {continue;}
     try {
       const filePaths = await listFiles(root.base, (filePath) => {
         const normalized = filePath.replace(/\\/g, "/");
@@ -163,7 +163,7 @@ function dedupeByPath(items) {
   const out = [];
   for (const entry of items) {
     const key = uniquePathKey(entry.path);
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {continue;}
     seen.add(key);
     out.push(entry);
   }
@@ -216,7 +216,7 @@ export async function loadSkillsCatalogData() {
 
   const unique = dedupeByPath(records);
 
-  const categories = [...new Set(unique.map((item) => item.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const categories = [...new Set(unique.map((item) => item.category).filter(Boolean))].toSorted((a, b) => a.localeCompare(b));
 
   return {
     records: unique,

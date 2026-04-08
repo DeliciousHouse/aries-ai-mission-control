@@ -1,6 +1,6 @@
 {
   "schema": "sugarandleather.project-board.v2",
-  "updatedAt": "2026-04-07T10:26:57.648Z",
+  "updatedAt": "2026-04-08T13:58:57.232Z",
   "note": "Internal execution board for Aries AI. This board is the operational source of truth for ownership, blockers, handoffs, and status changes. It is not runtime telemetry.",
   "tasks": [
     {
@@ -10,10 +10,10 @@
       "assigneeId": "rohan",
       "assigneeType": "human-collaborator",
       "assigneeDisplayName": "🎨 Rohan",
-      "status": "ready",
+      "status": "shipped",
       "priority": "P2",
       "createdAt": "2026-04-07T10:23:01.953Z",
-      "updatedAt": "2026-04-07T10:26:57.648Z",
+      "updatedAt": "2026-04-07T14:14:50.416Z",
       "deliverableLink": null,
       "notes": [
         {
@@ -29,6 +29,41 @@
           "createdAt": "2026-04-07T10:26:57.648Z",
           "actorId": "brendan",
           "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775571253418",
+          "body": "Started task",
+          "createdAt": "2026-04-07T14:14:13.418Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775571257472",
+          "body": "Moved to review",
+          "createdAt": "2026-04-07T14:14:17.472Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775571265303",
+          "body": "Moved to review",
+          "createdAt": "2026-04-07T14:14:25.303Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775571275685",
+          "body": "Shipped",
+          "createdAt": "2026-04-07T14:14:35.685Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775571281076",
+          "body": "Shipped",
+          "createdAt": "2026-04-07T14:14:41.076Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
         }
       ],
       "workstream": "approval-routing-validation",
@@ -44,6 +79,30 @@
           "fromStatus": null,
           "toStatus": "ready",
           "note": "Seed Rohan human-approval routing test task."
+        },
+        {
+          "timestamp": "2026-04-07T14:14:13.418Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "ready",
+          "toStatus": "active",
+          "note": "Started task"
+        },
+        {
+          "timestamp": "2026-04-07T14:14:17.472Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "active",
+          "toStatus": "review",
+          "note": "Moved to review"
+        },
+        {
+          "timestamp": "2026-04-07T14:14:35.685Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "review",
+          "toStatus": "shipped",
+          "note": "Shipped"
         }
       ],
       "createdBy": {
@@ -52,9 +111,9 @@
         "actorType": "ai-orchestrator"
       },
       "updatedBy": {
-        "actorId": "brendan",
-        "actorDisplayName": "👑 Brendan",
-        "actorType": "human-authority"
+        "actorId": "jarvis",
+        "actorDisplayName": "🜂 Jarvis",
+        "actorType": "ai-orchestrator"
       },
       "allowedAssigneeTypes": [
         "ai-orchestrator",
@@ -81,10 +140,10 @@
       "assigneeId": "rohan",
       "assigneeType": "human-collaborator",
       "assigneeDisplayName": "🎨 Rohan",
-      "status": "ready",
-      "priority": "P2",
+      "status": "review",
+      "priority": "P1",
       "createdAt": "2026-04-07T08:25:31.800Z",
-      "updatedAt": "2026-04-07T08:25:31.800Z",
+      "updatedAt": "2026-04-07T15:07:53.923Z",
       "deliverableLink": null,
       "notes": [
         {
@@ -108,6 +167,22 @@
           "fromStatus": null,
           "toStatus": "ready",
           "note": "Acceptance criteria: onboarding and integration screens label executable vs unavailable states truthfully, do not route users into unsupported backend actions, and leave a clean frontend surface ready for backend hookup after Roy returns on April 13, 2026."
+        },
+        {
+          "timestamp": "2026-04-07T15:07:53.897Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "ready",
+          "toStatus": "active",
+          "note": null
+        },
+        {
+          "timestamp": "2026-04-07T15:07:53.904Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "active",
+          "toStatus": "review",
+          "note": null
         }
       ],
       "createdBy": {
@@ -370,10 +445,10 @@
       "assigneeId": "rohan",
       "assigneeType": "human-collaborator",
       "assigneeDisplayName": "🎨 Rohan",
-      "status": "ready",
+      "status": "review",
       "priority": "P1",
       "createdAt": "2026-04-05T10:37:45.595Z",
-      "updatedAt": "2026-04-07T10:26:57.628Z",
+      "updatedAt": "2026-04-08T13:58:57.232Z",
       "deliverableLink": null,
       "notes": [
         {
@@ -417,13 +492,76 @@
           "createdAt": "2026-04-07T10:26:57.628Z",
           "actorId": "brendan",
           "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775571382156",
+          "body": "Started task",
+          "createdAt": "2026-04-07T14:16:22.156Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775571393392",
+          "body": "Started task",
+          "createdAt": "2026-04-07T14:16:33.392Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
+        },
+        {
+          "id": "note-1775583988559",
+          "body": "Applied from routing request rr_forge_deefbl: Confirm Brendan dependency for dashboard contract wording, test F",
+          "createdAt": "2026-04-07T17:46:28.559Z",
+          "actorId": "brendan",
+          "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775584010271",
+          "body": "Applied from routing request rr_forge_5feyy9: Confirm Brendan dependency for dashboard contract wording, test E",
+          "createdAt": "2026-04-07T17:46:50.271Z",
+          "actorId": "brendan",
+          "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775584017849",
+          "body": "Applied from routing request rr_forge_msmg4e: Confirm Brendan dependency for dashboard contract wording, test D",
+          "createdAt": "2026-04-07T17:46:57.849Z",
+          "actorId": "brendan",
+          "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775584023630",
+          "body": "Applied from routing request rr_forge_1ny1zo: Confirm Brendan dependency for dashboard contract wording",
+          "createdAt": "2026-04-07T17:47:03.630Z",
+          "actorId": "brendan",
+          "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775584036118",
+          "body": "Applied from routing request rr_forge_1qtc51r: Confirm Brendan dependency for dashboard contract wording, test G",
+          "createdAt": "2026-04-07T17:47:16.118Z",
+          "actorId": "brendan",
+          "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775584044727",
+          "body": "Applied from routing request rr_forge_1jbt5ra: Confirm Brendan dependency for dashboard contract wording, test H",
+          "createdAt": "2026-04-07T17:47:24.727Z",
+          "actorId": "brendan",
+          "actorDisplayName": "👑 Brendan"
+        },
+        {
+          "id": "note-1775656737232",
+          "body": "Moved to review",
+          "createdAt": "2026-04-08T13:58:57.232Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis"
         }
       ],
       "workstream": "engineering-delivery",
       "systemScope": "aries-app",
       "taskDomain": "frontend",
-      "blocked": false,
-      "blockerReason": null,
+      "blocked": true,
+      "blockerReason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test H.",
       "statusHistory": [
         {
           "timestamp": "2026-04-05T10:37:45.595Z",
@@ -456,6 +594,22 @@
           "fromStatus": "active",
           "toStatus": "ready",
           "note": "Approve status alignment from Forge report."
+        },
+        {
+          "timestamp": "2026-04-07T14:16:22.156Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "ready",
+          "toStatus": "active",
+          "note": "Started task"
+        },
+        {
+          "timestamp": "2026-04-08T13:58:57.232Z",
+          "actorId": "jarvis",
+          "actorDisplayName": "🜂 Jarvis",
+          "fromStatus": "active",
+          "toStatus": "review",
+          "note": "Moved to review"
         }
       ],
       "createdBy": {
@@ -464,9 +618,9 @@
         "actorType": "ai-orchestrator"
       },
       "updatedBy": {
-        "actorId": "brendan",
-        "actorDisplayName": "👑 Brendan",
-        "actorType": "human-authority"
+        "actorId": "jarvis",
+        "actorDisplayName": "🜂 Jarvis",
+        "actorType": "ai-orchestrator"
       },
       "allowedAssigneeTypes": [
         "ai-orchestrator",
@@ -479,9 +633,15 @@
         "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
         "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
         "Confirm backend contract language to surface in the UI.",
-        "Approve backend contract wording for the dashboard handoff state labels, test I."
+        "Approve backend contract wording for the dashboard handoff state labels, test I.",
+        "Approve backend contract wording for the dashboard handoff state labels, test F.",
+        "Approve backend contract wording for the dashboard handoff state labels, test E.",
+        "Approve backend contract wording for the dashboard handoff state labels, test D.",
+        "Approve backend contract wording for the dashboard handoff state labels, test B.",
+        "Approve backend contract wording for the dashboard handoff state labels, test G.",
+        "Approve backend contract wording for the dashboard handoff state labels, test H."
       ],
-      "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test I.",
+      "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test H.",
       "sourceRefs": [
         "PRIORITIES.md",
         "/app/mission-control/server/data/execution-tasks.json",

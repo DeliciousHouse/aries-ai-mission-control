@@ -9,13 +9,13 @@ const DEFAULT_TIMEOUT = Number(process.env.MISSION_CONTROL_OPENCLAW_TIMEOUT_MS |
 const MAX_BUFFER = 1024 * 1024 * 8;
 
 function resolveOpenClawBin() {
-  if (process.env.OPENCLAW_BIN) return process.env.OPENCLAW_BIN;
+  if (process.env.OPENCLAW_BIN) {return process.env.OPENCLAW_BIN;}
   return "openclaw";
 }
 
 function resolveLegacyBundledOpenClawBin() {
   const localBin = path.resolve(process.cwd(), "node_modules/.bin/openclaw");
-  if (existsSync(localBin)) return localBin;
+  if (existsSync(localBin)) {return localBin;}
   return null;
 }
 
@@ -25,19 +25,19 @@ function resolveOpenClawCommandCwd() {
 
 function parseJsonCandidate(text) {
   const raw = typeof text === "string" ? text.trim() : "";
-  if (!raw) return null;
+  if (!raw) {return null;}
 
   const direct = tryParse(raw);
-  if (direct.ok) return direct.value;
+  if (direct.ok) {return direct.value;}
 
   const objectIndex = raw.indexOf("{");
   const arrayIndex = raw.indexOf("[");
-  const starts = [objectIndex, arrayIndex].filter((value) => value >= 0).sort((a, b) => a - b);
+  const starts = [objectIndex, arrayIndex].filter((value) => value >= 0).toSorted((a, b) => a - b);
 
   for (const start of starts) {
     const sliced = raw.slice(start);
     const parsed = tryParse(sliced);
-    if (parsed.ok) return parsed.value;
+    if (parsed.ok) {return parsed.value;}
   }
 
   return null;
@@ -77,18 +77,18 @@ export async function runOpenClawJson(args, { timeout = DEFAULT_TIMEOUT } = {}) 
   try {
     const { stdout = "", stderr = "" } = await runOpenClawCommand(args, { timeout });
     const parsed = parseJsonCandidate(stdout) ?? parseJsonCandidate(stderr);
-    if (parsed !== null) return parsed;
+    if (parsed !== null) {return parsed;}
     throw new Error("Unexpected end of JSON input");
   } catch (error) {
     const stdout = typeof error?.stdout === "string" ? error.stdout.trim() : "";
     const stderr = typeof error?.stderr === "string" ? error.stderr.trim() : "";
     const parsed = parseJsonCandidate(stdout) ?? parseJsonCandidate(stderr);
-    if (parsed !== null) return parsed;
+    if (parsed !== null) {return parsed;}
 
     const fallback = await runLegacyBundledOpenClawCommand(args, { timeout }).catch(() => null);
     if (fallback) {
       const parsedFallback = parseJsonCandidate(fallback.stdout) ?? parseJsonCandidate(fallback.stderr);
-      if (parsedFallback !== null) return parsedFallback;
+      if (parsedFallback !== null) {return parsedFallback;}
     }
 
     const detail = [stderr, stdout].filter(Boolean).join(" | ") || error.message;

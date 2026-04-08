@@ -27,9 +27,9 @@ function splitFrontmatter(markdown) {
   const metadata = {};
   for (const rawLine of match[1].split(/\r?\n/)) {
     const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
+    if (!line || line.startsWith("#")) {continue;}
     const colon = line.indexOf(":");
-    if (colon < 0) continue;
+    if (colon < 0) {continue;}
     const key = line.slice(0, colon).trim();
     const value = line.slice(colon + 1).trim().replace(/^['"]|['"]$/g, "");
     metadata[key] = value;
@@ -59,15 +59,15 @@ function firstBullet(section) {
 
 function chiefStatusFromSection(sectionBody, metadata, fallbackKey) {
   const explicit = sectionBody.match(/^-\s+report_status:\s+(.+)$/m)?.[1]?.trim();
-  if (explicit) return explicit;
-  if (fallbackKey && metadata[fallbackKey]) return metadata[fallbackKey];
+  if (explicit) {return explicit;}
+  if (fallbackKey && metadata[fallbackKey]) {return metadata[fallbackKey];}
   return "unknown";
 }
 
 function chiefAgentIdFromSection(sectionBody, metadata, fallbackKey) {
   const explicit = sectionBody.match(/^-\s+chief_agent_id:\s+(.+)$/m)?.[1]?.trim();
-  if (explicit) return explicit;
-  if (fallbackKey && metadata[fallbackKey]) return metadata[fallbackKey];
+  if (explicit) {return explicit;}
+  if (fallbackKey && metadata[fallbackKey]) {return metadata[fallbackKey];}
   return null;
 }
 
@@ -77,9 +77,9 @@ function chiefIdFromSection(sectionBody) {
 
 function extractChiefSections(body, metadata) {
   const chiefReports = extractSection(body, "Chief Reports");
-  if (!chiefReports) return [];
+  if (!chiefReports) {return [];}
 
-  const regex = /^###\s+(.+?)\s*$([\s\S]*?)(?=^###\s+|\Z)/gm;
+  const regex = /^###\s+(.+?)\s*$([\s\S]*?)(?=^###\s+|Z)/gm;
   const sections = [];
   let match;
   while ((match = regex.exec(chiefReports))) {
@@ -104,7 +104,7 @@ function extractChiefSections(body, metadata) {
 
 function parseDateFromPath(relativePath, metadata, stats) {
   const explicit = metadata.date || relativePath.match(/(\d{4}-\d{2}-\d{2})/)?.[1];
-  if (explicit) return explicit;
+  if (explicit) {return explicit;}
   return toIso(stats.mtimeMs).slice(0, 10);
 }
 
@@ -115,20 +115,20 @@ function parseStatus(metadata, body) {
   }
 
   const standupHealth = extractSection(body, "Standup Health").toLowerCase();
-  if (standupHealth.includes("overall_status: failed")) return "failed";
-  if (standupHealth.includes("overall_status: partial")) return "partial";
-  if (standupHealth.includes("overall_status: complete")) return "complete";
+  if (standupHealth.includes("overall_status: failed")) {return "failed";}
+  if (standupHealth.includes("overall_status: partial")) {return "partial";}
+  if (standupHealth.includes("overall_status: complete")) {return "complete";}
   return "partial";
 }
 
 function computeSummary(items) {
   const summary = { latestId: null, total: items.length, complete: 0, partial: 0, failed: 0 };
   for (const item of items) {
-    if (item.status === "complete") summary.complete += 1;
-    else if (item.status === "failed") summary.failed += 1;
-    else summary.partial += 1;
+    if (item.status === "complete") {summary.complete += 1;}
+    else if (item.status === "failed") {summary.failed += 1;}
+    else {summary.partial += 1;}
   }
-  if (items[0]) summary.latestId = items[0].id;
+  if (items[0]) {summary.latestId = items[0].id;}
   return summary;
 }
 
@@ -142,7 +142,7 @@ const audioContentTypes = {
 };
 
 export function isAllowedStandupFile(rawPath) {
-  if (!rawPath || typeof rawPath !== "string") return false;
+  if (!rawPath || typeof rawPath !== "string") {return false;}
   const normalized = rawPath.replace(/\\/g, "/").replace(/^\/+/, "");
   return normalized.startsWith("team/meetings/");
 }

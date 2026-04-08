@@ -42,17 +42,17 @@ function settledToSource(id, label, command, result) {
 }
 
 function normalizeSessionType(sessionKey) {
-  if (sessionKey.includes(":subagent:")) return "sub-agent";
-  if (sessionKey.includes(":cron:")) return "cron";
-  if (sessionKey.includes(":thread:")) return "thread";
-  if (sessionKey.includes(":main")) return "main";
+  if (sessionKey.includes(":subagent:")) {return "sub-agent";}
+  if (sessionKey.includes(":cron:")) {return "cron";}
+  if (sessionKey.includes(":thread:")) {return "thread";}
+  if (sessionKey.includes(":main")) {return "main";}
   return "session";
 }
 
 function normalizeSessionState(ageMs) {
-  if (typeof ageMs !== "number") return null;
-  if (ageMs <= 5 * 60 * 1000) return "recently active";
-  if (ageMs <= 60 * 60 * 1000) return "warm";
+  if (typeof ageMs !== "number") {return null;}
+  if (ageMs <= 5 * 60 * 1000) {return "recently active";}
+  if (ageMs <= 60 * 60 * 1000) {return "warm";}
   return "idle";
 }
 
@@ -63,17 +63,17 @@ function mapHealthStatus(ok) {
 function commandDetail(result, connectedDetail, emptyDetail) {
   if (result.status === "fulfilled") {
     const value = result.value;
-    if (Array.isArray(value) && value.length === 0) return emptyDetail;
-    if (Array.isArray(value?.tasks) && value.tasks.length === 0) return emptyDetail;
-    if (Array.isArray(value?.sessions) && value.sessions.length === 0) return emptyDetail;
-    if (Array.isArray(value?.flows) && value.flows.length === 0) return emptyDetail;
+    if (Array.isArray(value) && value.length === 0) {return emptyDetail;}
+    if (Array.isArray(value?.tasks) && value.tasks.length === 0) {return emptyDetail;}
+    if (Array.isArray(value?.sessions) && value.sessions.length === 0) {return emptyDetail;}
+    if (Array.isArray(value?.flows) && value.flows.length === 0) {return emptyDetail;}
     return connectedDetail;
   }
   return result.reason instanceof Error ? result.reason.message : "Source unavailable.";
 }
 
 function connectionState(result, rows) {
-  if (result.status !== "fulfilled") return "disconnected";
+  if (result.status !== "fulfilled") {return "disconnected";}
   return rows.length ? "connected" : "empty";
 }
 
@@ -129,7 +129,7 @@ async function loadConfigSessions() {
 
   return {
     config,
-    rows: rows.sort((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0)),
+    rows: rows.toSorted((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0)),
   };
 }
 

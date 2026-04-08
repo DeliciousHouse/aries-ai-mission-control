@@ -80,7 +80,7 @@ export default function App() {
     const timestamps = [command.data, buildLab.data, runtime.data, org.data, briefing.data, briefingArchive.data, cronHealth.data, memoryFiles.data, routingRequests.data]
       .map((entry) => entry?.generatedAt)
       .filter(Boolean) as string[];
-    const sorted = timestamps.sort();
+    const sorted = timestamps.toSorted();
     return sorted.length ? sorted[sorted.length - 1] : null;
   }, [briefing.data, briefingArchive.data, buildLab.data, command.data, cronHealth.data, memoryFiles.data, org.data, routingRequests.data, runtime.data]);
 

@@ -22,7 +22,7 @@ export function usePollingResource<T>({ load, intervalMs, enabled = true, initia
   const [attempted, setAttempted] = useState(false);
 
   const reload = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled) {return;}
     try {
       setLoading(true);
       setError(null);
@@ -54,14 +54,14 @@ export function usePollingResource<T>({ load, intervalMs, enabled = true, initia
           setAttempted(true);
         }
         const next = await load();
-        if (cancelled) return;
+        if (cancelled) {return;}
         setData(next);
         setError(null);
       } catch (err) {
-        if (cancelled) return;
+        if (cancelled) {return;}
         setError(err instanceof Error ? err.message : "Unknown request error");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {setLoading(false);}
       }
     };
 
@@ -74,7 +74,7 @@ export function usePollingResource<T>({ load, intervalMs, enabled = true, initia
 
     return () => {
       cancelled = true;
-      if (timer !== null) window.clearTimeout(timer);
+      if (timer !== null) {window.clearTimeout(timer);}
       window.clearInterval(poller);
     };
   }, [enabled, initialDelayMs, intervalMs, load]);

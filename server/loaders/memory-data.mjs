@@ -64,10 +64,10 @@ export async function loadMemoryFiles() {
   for (const filePath of candidates) {
     try {
       const realPath = path.resolve(filePath);
-      if (uniqueByPath.has(realPath)) continue;
+      if (uniqueByPath.has(realPath)) {continue;}
       uniqueByPath.add(realPath);
       const stats = await fs.stat(realPath);
-      if (!stats.isFile()) continue;
+      if (!stats.isFile()) {continue;}
       rows.push(toMeta(repoRoot, realPath, stats));
     } catch (error) {
       warnings.push(`Unable to read file ${normalizeForwardSlashes(path.relative(repoRoot, filePath))}: ${
@@ -77,7 +77,7 @@ export async function loadMemoryFiles() {
   }
 
   rows.sort((a, b) => {
-    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+    if (a.isPinned !== b.isPinned) {return a.isPinned ? -1 : 1;}
     return b.updatedAt.localeCompare(a.updatedAt);
   });
 
@@ -130,7 +130,7 @@ export async function loadMemoryFileContent(rawPath) {
       sizeBytes: stats.size,
     };
   } catch (error) {
-    if (error.code === "BAD_REQUEST" || error.code === "NOT_FOUND") throw error;
+    if (error.code === "BAD_REQUEST" || error.code === "NOT_FOUND") {throw error;}
     const wrapped = new Error(`Unable to read file ${normalized}: ${error instanceof Error ? error.message : "Unknown error"}`);
     wrapped.code = "READ_ERROR";
     throw wrapped;

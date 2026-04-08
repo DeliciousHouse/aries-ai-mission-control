@@ -126,16 +126,16 @@ export function KnowledgePage({
     api
       .loadMemoryFile(selectedMemoryPath)
       .then((payload) => {
-        if (cancelled) return;
+        if (cancelled) {return;}
         setSelectedMemoryContent(payload.data);
       })
       .catch((error) => {
-        if (cancelled) return;
+        if (cancelled) {return;}
         setSelectedMemoryContent(null);
         setSelectedMemoryError(error instanceof Error ? error.message : "Unable to read memory file.");
       })
       .finally(() => {
-        if (!cancelled) setSelectedMemoryLoading(false);
+        if (!cancelled) {setSelectedMemoryLoading(false);}
       });
 
     return () => {
@@ -153,7 +153,7 @@ export function KnowledgePage({
 
     setSelectedBriefId((current) => {
       const same = items.find((item) => item.id === current);
-      if (same) return current;
+      if (same) {return current;}
       setSelectedBrief(items[0]);
       return items[0].id;
     });
@@ -162,7 +162,7 @@ export function KnowledgePage({
   useEffect(() => {
     const items = briefingData?.items ?? [];
     if (!selectedBriefId || !items.length) {
-      if (!items.length) setSelectedBrief(null);
+      if (!items.length) {setSelectedBrief(null);}
       return;
     }
     setSelectedBrief(items.find((item) => item.id === selectedBriefId) ?? null);
@@ -178,7 +178,7 @@ export function KnowledgePage({
 
     setSelectedStandupId((current) => {
       const same = items.find((item) => item.id === current);
-      if (same) return current;
+      if (same) {return current;}
       setSelectedStandup(items[0]);
       return items[0].id;
     });
@@ -187,7 +187,7 @@ export function KnowledgePage({
   useEffect(() => {
     const items = standupData?.items ?? [];
     if (!selectedStandupId || !items.length) {
-      if (!items.length) setSelectedStandup(null);
+      if (!items.length) {setSelectedStandup(null);}
       return;
     }
     setSelectedStandup(items.find((item) => item.id === selectedStandupId) ?? null);
@@ -209,19 +209,19 @@ export function KnowledgePage({
   }, [skillData?.categories]);
 
   const skillFilter: SourceFilter = useMemo(() => {
-    if (skillTab === "all") return { kind: "all" };
-    if (skillTab === "Bundled") return { kind: "source", source: "Bundled" };
-    if (skillTab === "Local") return { kind: "source", source: "Local" };
-    if (skillTab === "Workspace") return { kind: "source", source: "Workspace" };
-    if (skillTab.startsWith("category:")) return { kind: "category", category: skillTab.slice("category:".length) };
+    if (skillTab === "all") {return { kind: "all" };}
+    if (skillTab === "Bundled") {return { kind: "source", source: "Bundled" };}
+    if (skillTab === "Local") {return { kind: "source", source: "Local" };}
+    if (skillTab === "Workspace") {return { kind: "source", source: "Workspace" };}
+    if (skillTab.startsWith("category:")) {return { kind: "category", category: skillTab.slice("category:".length) };}
     return { kind: "all" };
   }, [skillTab]);
 
   const filteredSkills = useMemo(() => {
     const records = skillData?.records ?? [];
     return records.filter((skill) => {
-      if (skillFilter.kind === "all") return true;
-      if (skillFilter.kind === "source") return skill.source === skillFilter.source;
+      if (skillFilter.kind === "all") {return true;}
+      if (skillFilter.kind === "source") {return skill.source === skillFilter.source;}
       return (skill.category || "").toLowerCase() === skillFilter.category.toLowerCase();
     });
   }, [skillData?.records, skillFilter]);
@@ -1075,8 +1075,8 @@ function SummaryCard({
 }
 
 function resourceStateLabel(loading: boolean, error: string | null) {
-  if (loading) return "Loading";
-  if (error) return "Error";
+  if (loading) {return "Loading";}
+  if (error) {return "Error";}
   return "Connected";
 }
 
@@ -1105,7 +1105,7 @@ function renderMarkdown(markdown: string) {
   let listBuffer: string[] = [];
 
   const flushList = () => {
-    if (!listBuffer.length) return;
+    if (!listBuffer.length) {return;}
     parts.push("<ul>");
     for (const item of listBuffer) {
       parts.push(`<li>${toInlineHtml(item.replace(/^[-*]\s+/, ""))}</li>`);
@@ -1143,9 +1143,9 @@ function renderMarkdown(markdown: string) {
 }
 
 function statusBadgeClass(status: string) {
-  if (status === "Delivered") return "status-done";
-  if (status === "Pending") return "status-in_progress";
-  if (status === "Unavailable") return "status-todo";
+  if (status === "Delivered") {return "status-done";}
+  if (status === "Pending") {return "status-in_progress";}
+  if (status === "Unavailable") {return "status-todo";}
   return "status-warning";
 }
 

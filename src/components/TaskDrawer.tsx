@@ -131,14 +131,14 @@ function allowedAssigneeIdsForDraft(
   executionMode: ProjectBoardExecutionMode,
   actors: ProjectBoardActor[],
 ) {
-  if (taskDomain === "openclaw-change" || systemScope === "openclaw") return ["brendan"];
-  if (taskDomain === "manual-ops") return ["somwya"];
+  if (taskDomain === "openclaw-change" || systemScope === "openclaw") {return ["brendan"];}
+  if (taskDomain === "manual-ops") {return ["somwya"];}
   const aiActors = actors
     .filter((actor) => ["ai-orchestrator", "chief", "ai-specialist"].includes(actor.assigneeType))
     .map((actor) => actor.id);
-  if (taskDomain === "frontend") return [...new Set([...aiActors, "rohan"])];
-  if (taskDomain === "backend") return [...new Set([...aiActors, "roy"])];
-  if (executionMode !== "standard") return ["brendan"];
+  if (taskDomain === "frontend") {return [...new Set([...aiActors, "rohan"])];}
+  if (taskDomain === "backend") {return [...new Set([...aiActors, "roy"])];}
+  if (executionMode !== "standard") {return ["brendan"];}
   return aiActors;
 }
 
@@ -162,9 +162,9 @@ export function TaskDrawer({ task, creating, actors, assignees, statusFlow, filt
   }, [task, creating]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {return;}
     const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {onClose();}
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -185,7 +185,7 @@ export function TaskDrawer({ task, creating, actors, assignees, statusFlow, filt
   );
 
   useEffect(() => {
-    if (!assigneeOptions.length) return;
+    if (!assigneeOptions.length) {return;}
     if (!availableAssigneeIds.includes(editor.assigneeId)) {
       setEditor((current) => ({ ...current, assigneeId: assigneeOptions[0].id }));
     }
@@ -205,7 +205,7 @@ export function TaskDrawer({ task, creating, actors, assignees, statusFlow, filt
   }, [editor, forceExpanded, forceReason, onSave]);
 
   const quickActions = useMemo(() => {
-    if (creating || !task) return [];
+    if (creating || !task) {return [];}
     const actions: Array<{ label: string; cls: string; updates: Partial<EditorState>; note: string }> = [];
     const s = task.status;
 
@@ -481,7 +481,7 @@ function DetailsTab({
 }
 
 function HistoryTab({ task, actorById }: { task: ProjectBoardTask | null; actorById: Map<string, ProjectBoardActor> }) {
-  if (!task) return <p className="muted">No task selected.</p>;
+  if (!task) {return <p className="muted">No task selected.</p>;}
 
   const forceHistory: ProjectBoardForceActionEntry[] = task.forcedActionHistory ?? [];
 
@@ -492,7 +492,7 @@ function HistoryTab({ task, actorById }: { task: ProjectBoardTask | null; actorB
   const allEntries: TimelineItem[] = [
     ...task.statusHistory.map((entry) => ({ type: "status" as const, entry, ts: entry.timestamp })),
     ...forceHistory.map((entry) => ({ type: "force" as const, entry, ts: entry.timestamp })),
-  ].sort((a, b) => (Date.parse(b.ts) || 0) - (Date.parse(a.ts) || 0));
+  ].toSorted((a, b) => (Date.parse(b.ts) || 0) - (Date.parse(a.ts) || 0));
 
   if (!allEntries.length) {
     return <p className="muted">No status changes recorded yet.</p>;
@@ -553,7 +553,7 @@ function NotesTab({
   editor: EditorState;
   applyField: <K extends keyof EditorState>(field: K, value: EditorState[K]) => void;
 }) {
-  if (!task) return <p className="muted">No task selected.</p>;
+  if (!task) {return <p className="muted">No task selected.</p>;}
 
   return (
     <div className="task-drawer-section">
@@ -569,7 +569,7 @@ function NotesTab({
 
       {task.notes.length > 0 ? (
         <div className="timeline-stack">
-          {task.notes.slice().reverse().map((note, index) => (
+          {task.notes.slice().toReversed().map((note, index) => (
             <div className="timeline-entry" key={`note-${note.id}-${index}`}>
               <div className="timeline-entry-header">
                 <span className="timeline-actor">{note.actorDisplayName}</span>

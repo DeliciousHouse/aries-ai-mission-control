@@ -21,8 +21,8 @@ function toIsoIfNumber(value) {
 }
 
 function normalizeStatus(job) {
-  if (!job) return "unavailable";
-  if (job.enabled === false) return "disabled";
+  if (!job) {return "unavailable";}
+  if (job.enabled === false) {return "disabled";}
 
   const last = (job.state?.lastRunStatus || job.state?.lastStatus || "").toLowerCase();
   if (!last) {

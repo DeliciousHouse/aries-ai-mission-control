@@ -29,7 +29,7 @@ export class ApiError extends Error {
 }
 
 function isMemoryAllowed(rawPath) {
-  if (!rawPath) return false;
+  if (!rawPath) {return false;}
   const normalized = rawPath.replace(/\\/g, "/").replace(/^\/+/, "");
   return normalized === "MEMORY.md" || normalized === "BACKLOG.md" || normalized.startsWith("memory/");
 }

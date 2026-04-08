@@ -173,12 +173,12 @@ export function AppShell({ route, onNavigate, lastUpdated, navSignals = {}, chil
 }
 
 function formatTimestamp(iso: string | null) {
-  if (!iso) return "Waiting for data";
+  if (!iso) {return "Waiting for data";}
   const date = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  if (diffMs < 60_000) return "Just now";
-  if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)}m ago`;
+  if (diffMs < 60_000) {return "Just now";}
+  if (diffMs < 3_600_000) {return `${Math.floor(diffMs / 60_000)}m ago`;}
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 

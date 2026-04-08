@@ -4,10 +4,10 @@ import { listFiles, toIso, resolveRepoRoot } from "../lib/fs-utils.mjs";
 
 function isBriefSource(filePath) {
   const lower = filePath.toLowerCase();
-  if (lower.startsWith("docs/briefs/")) return "brief";
-  if (lower.startsWith("docs/plans/")) return "plan";
-  if (lower.includes("debrief")) return "debrief";
-  if (lower.startsWith("memory/")) return "implementation-lessons";
+  if (lower.startsWith("docs/briefs/")) {return "brief";}
+  if (lower.startsWith("docs/plans/")) {return "plan";}
+  if (lower.includes("debrief")) {return "debrief";}
+  if (lower.startsWith("memory/")) {return "implementation-lessons";}
   return "note";
 }
 
@@ -25,7 +25,7 @@ async function scanDirectory(directory, predicate, files) {
 }
 
 function deriveDeliveryStatus(relativePath, fileName, updatedAt) {
-  if (!updatedAt) return "Unknown";
+  if (!updatedAt) {return "Unknown";}
 
   const hasDatePrefix = /\b\d{4}-\d{2}-\d{2}\b/.test(fileName);
   if (relativePath.startsWith("docs/briefs/") && !hasDatePrefix) {
@@ -86,7 +86,7 @@ export async function loadBriefingArchiveData() {
   const deduped = [];
   for (const filePath of files) {
     const relative = path.relative(repoRoot, filePath).replace(/\\/g, "/");
-    if (seen.has(relative)) continue;
+    if (seen.has(relative)) {continue;}
     seen.add(relative);
     deduped.push(filePath);
   }
