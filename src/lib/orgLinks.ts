@@ -12,13 +12,13 @@ export function orgMemberHref(memberId: string) {
 }
 
 export function readOrgMemberFromLocation() {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {return null;}
   const params = new URLSearchParams(window.location.search);
   return params.get(ORG_MEMBER_QUERY_KEY);
 }
 
 export function replaceOrgMemberInLocation(memberId: string | null) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {return;}
   const params = new URLSearchParams(window.location.search);
   if (memberId) {
     params.set(ORG_MEMBER_QUERY_KEY, memberId);

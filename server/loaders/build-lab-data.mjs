@@ -32,13 +32,13 @@ const prototypePreviewRegistry = {
 };
 
 function cleanText(value, fallback = "Unavailable") {
-  if (typeof value !== "string") return fallback;
+  if (typeof value !== "string") {return fallback;}
   const normalized = value.replace(/\s+/g, " ").trim();
   return normalized || fallback;
 }
 
 function truncate(value, max = 180) {
-  if (value.length <= max) return value;
+  if (value.length <= max) {return value;}
   return `${value.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
 }
 
@@ -59,13 +59,13 @@ function isThisWeek(value, now = Date.now()) {
 function normalizeIdeaState(track) {
   if (typeof track.state === "string") {
     const lowered = track.state.toLowerCase();
-    if (["candidate", "active", "deferred", "promoted", "archived"].includes(lowered)) return lowered;
+    if (["candidate", "active", "deferred", "promoted", "archived"].includes(lowered)) {return lowered;}
   }
 
-  if (track.status === "archived") return "archived";
-  if (track.status === "done") return "promoted";
-  if (track.lane === "deferred") return "deferred";
-  if (track.status === "watching") return "candidate";
+  if (track.status === "archived") {return "archived";}
+  if (track.status === "done") {return "promoted";}
+  if (track.lane === "deferred") {return "deferred";}
+  if (track.status === "watching") {return "candidate";}
   return "active";
 }
 
@@ -90,9 +90,9 @@ function deriveCategory(track) {
 }
 
 function statusFromTrack(track, previewProbe) {
-  if (track.status === "archived" || track.state === "archived") return "archived";
-  if (previewProbe?.reachable === true) return "running";
-  if (previewProbe?.reachable === false) return "stopped";
+  if (track.status === "archived" || track.state === "archived") {return "archived";}
+  if (previewProbe?.reachable === true) {return "running";}
+  if (previewProbe?.reachable === false) {return "stopped";}
   return "unavailable";
 }
 
@@ -112,7 +112,7 @@ function statusDetailFromTrack(track, previewProbe) {
 }
 
 async function probePreview(target) {
-  if (!target?.url) return null;
+  if (!target?.url) {return null;}
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 1500);
@@ -200,7 +200,7 @@ async function collectRecentFiles(rootPath, maxFiles = 4) {
   }
 
   return enriched
-    .sort((a, b) => b.mtimeMs - a.mtimeMs)
+    .toSorted((a, b) => b.mtimeMs - a.mtimeMs)
     .slice(0, maxFiles)
     .map((entry) => ({
       path: entry.filePath,
@@ -374,7 +374,7 @@ async function loadIdeaBacklogData(trackRegistry) {
       sourceRefs: Array.isArray(track.sourceRefs) ? track.sourceRefs : [],
       isNew: isRecent(registry.updatedAt, now),
     }))
-    .sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
+    .toSorted((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
 
   return {
     source: {
@@ -385,8 +385,8 @@ async function loadIdeaBacklogData(trackRegistry) {
         "No separate idea registry was found. Idea Backlog falls back to the existing Build Lab planning registry and derives category/state from the real track metadata.",
     },
     filters: {
-      categories: Array.from(new Set(items.map((item) => item.category))).sort(),
-      workstreams: Array.from(new Set(items.map((item) => item.workstream))).sort(),
+      categories: Array.from(new Set(items.map((item) => item.category))).toSorted(),
+      workstreams: Array.from(new Set(items.map((item) => item.workstream))).toSorted(),
     },
     items,
   };
@@ -394,27 +394,27 @@ async function loadIdeaBacklogData(trackRegistry) {
 
 function topicFromResearchPath(relativePath) {
   const lowered = relativePath.toLowerCase();
-  if (lowered.includes("mission-control")) return "Mission Control";
-  if (lowered.includes("openclaw") || lowered.includes("cron") || lowered.includes("runtime")) return "OpenClaw / Observability";
+  if (lowered.includes("mission-control")) {return "Mission Control";}
+  if (lowered.includes("openclaw") || lowered.includes("cron") || lowered.includes("runtime")) {return "OpenClaw / Observability";}
   if (lowered.includes("generated/validated") || lowered.includes("repo-audit") || lowered.includes("project-progress")) {
     return "aries-app Product / Build Notes";
   }
   if (lowered.includes("stage-1-research") || lowered.includes("meta-ads") || lowered.includes("creative")) {
     return "Experiment Findings";
   }
-  if (lowered.includes("stage-2-strategy") || lowered.includes("plans")) return "Implementation / Strategy";
-  if (lowered.includes("briefs") || lowered.includes("memory")) return "Engineering Notes";
+  if (lowered.includes("stage-2-strategy") || lowered.includes("plans")) {return "Implementation / Strategy";}
+  if (lowered.includes("briefs") || lowered.includes("memory")) {return "Engineering Notes";}
   return "Research";
 }
 
 function stageFromResearchPath(relativePath) {
   const lowered = relativePath.toLowerCase();
-  if (lowered.includes("stage-1-research")) return "stage-1-research";
-  if (lowered.includes("stage-2-strategy")) return "stage-2-strategy";
-  if (lowered.includes("stage-3-production")) return "stage-3-production";
-  if (lowered.includes("generated/validated")) return "validated";
-  if (lowered.includes("briefs")) return "brief";
-  if (lowered.includes("plans")) return "plan";
+  if (lowered.includes("stage-1-research")) {return "stage-1-research";}
+  if (lowered.includes("stage-2-strategy")) {return "stage-2-strategy";}
+  if (lowered.includes("stage-3-production")) {return "stage-3-production";}
+  if (lowered.includes("generated/validated")) {return "validated";}
+  if (lowered.includes("briefs")) {return "brief";}
+  if (lowered.includes("plans")) {return "plan";}
   return "note";
 }
 
@@ -701,7 +701,7 @@ const allowedFileRoots = [
 ];
 
 export function isAllowedBuildLabFile(rawPath) {
-  if (!rawPath) return false;
+  if (!rawPath) {return false;}
   const repoRoot = resolveRepoRoot();
   const absolute = path.resolve(repoRoot, rawPath);
   return allowedFileRoots.some((root) => absolute === root || absolute.startsWith(`${root}${path.sep}`));

@@ -1,6 +1,6 @@
 {
   "schema": "sugarandleather.routing-requests.v1",
-  "updatedAt": "2026-04-07T10:26:57.656Z",
+  "updatedAt": "2026-04-08T14:55:01.433Z",
   "requests": [
     {
       "id": "rr_forge_vb1vp4",
@@ -377,7 +377,7 @@
       "id": "rr_forge_1ny1zo",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:brendan-decision-request:uqou9b",
       "createdAt": "2026-04-07T09:58:13.077Z",
-      "updatedAt": "2026-04-07T09:58:13.077Z",
+      "updatedAt": "2026-04-07T17:47:03.631Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -433,11 +433,11 @@
       "requiresApproval": true,
       "approvalTarget": "brendan",
       "approvalLink": null,
-      "status": "pending",
-      "decisionAt": null,
-      "decisionBy": null,
+      "status": "applied",
+      "decisionAt": "2026-04-07T17:47:03.628Z",
+      "decisionBy": "brendan",
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T17:47:03.631Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -485,14 +485,49 @@
             "lastError": "No Telegram approval target was found from mission-control env or OpenClaw Telegram allowFrom/default target.",
             "command": null
           }
+        },
+        {
+          "id": "audit_a243333e-c7fd-4c3c-b96d-fb82c60f972c",
+          "timestamp": "2026-04-07T17:47:03.628Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "approved",
+          "note": "Approved for application.",
+          "status": "approved",
+          "metadata": null
+        },
+        {
+          "id": "audit_037a86f7-8f68-4bb5-b866-ed7d9881c30d",
+          "timestamp": "2026-04-07T17:47:03.631Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "applied",
+          "note": "Board updated for tighten-aries-app-dashboard-owner-handoff-states.",
+          "status": "applied",
+          "metadata": {
+            "patch": {
+              "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels.",
+              "dependencies": [
+                "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
+                "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
+                "Confirm backend contract language to surface in the UI.",
+                "Approve backend contract wording for the dashboard handoff state labels, test I.",
+                "Approve backend contract wording for the dashboard handoff state labels, test F.",
+                "Approve backend contract wording for the dashboard handoff state labels, test E.",
+                "Approve backend contract wording for the dashboard handoff state labels, test D.",
+                "Approve backend contract wording for the dashboard handoff state labels, test B."
+              ]
+            }
+          }
         }
-      ]
+      ],
+      "rationale": "Explicit Brendan decision requests stay gated for review."
     },
     {
       "id": "rr_forge_fxy4nx",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:jarvis-routing-approval:444pz7",
       "createdAt": "2026-04-07T09:58:13.080Z",
-      "updatedAt": "2026-04-07T09:58:13.080Z",
+      "updatedAt": "2026-04-07T15:07:53.895Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -538,14 +573,14 @@
       },
       "reason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test B.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.895Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -594,13 +629,14 @@
             "command": null
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_xhacf",
       "dedupeKey": "forge:align-onboarding-and-integrations-screens-with-current-executable-contract-truth:status-change-proposal:dqy61a",
       "createdAt": "2026-04-07T09:58:13.098Z",
-      "updatedAt": "2026-04-07T09:58:13.098Z",
+      "updatedAt": "2026-04-07T15:07:53.898Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -634,14 +670,14 @@
       },
       "reason": "Chief report says the task is currently active, but the board still shows ready.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.898Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -690,13 +726,14 @@
             "command": null
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_unayed",
       "dedupeKey": "forge:align-onboarding-and-integrations-screens-with-current-executable-contract-truth:priority-bump-proposal:fvewq8",
       "createdAt": "2026-04-07T09:58:13.100Z",
-      "updatedAt": "2026-04-07T09:58:13.100Z",
+      "updatedAt": "2026-04-07T15:07:53.901Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -730,14 +767,14 @@
       },
       "reason": "Rohan should work this frontend contract alignment next because it is now blocking route-truth cleanup.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.901Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -786,13 +823,14 @@
             "command": null
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_1wm03i6",
       "dedupeKey": "forge:align-onboarding-and-integrations-screens-with-current-executable-contract-truth:status-change-proposal:y9hiso",
       "createdAt": "2026-04-07T10:00:54.172Z",
-      "updatedAt": "2026-04-07T10:00:54.172Z",
+      "updatedAt": "2026-04-07T15:07:53.905Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -826,14 +864,14 @@
       },
       "reason": "Chief report says the task is currently review, but the board still shows ready.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.905Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -886,13 +924,14 @@
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram: Unrecognized key: \"contextVisibility\"\n\nRun: openclaw doctor --fix"
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_mz3lbw",
       "dedupeKey": "forge:align-onboarding-and-integrations-screens-with-current-executable-contract-truth:priority-bump-proposal:1wqzksj",
       "createdAt": "2026-04-07T10:00:57.798Z",
-      "updatedAt": "2026-04-07T10:00:57.798Z",
+      "updatedAt": "2026-04-07T15:07:53.908Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -926,14 +965,14 @@
       },
       "reason": "Rohan should move this frontend contract alignment into immediate review focus, test B.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.908Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -986,13 +1025,14 @@
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram: Unrecognized key: \"contextVisibility\"\n\nRun: openclaw doctor --fix"
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_msmg4e",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:brendan-decision-request:1qiij67",
       "createdAt": "2026-04-07T10:07:39.531Z",
-      "updatedAt": "2026-04-07T10:07:39.531Z",
+      "updatedAt": "2026-04-07T17:46:57.851Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1048,11 +1088,11 @@
       "requiresApproval": true,
       "approvalTarget": "brendan",
       "approvalLink": null,
-      "status": "pending",
-      "decisionAt": null,
-      "decisionBy": null,
+      "status": "applied",
+      "decisionAt": "2026-04-07T17:46:57.846Z",
+      "decisionBy": "brendan",
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T17:46:57.851Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1104,14 +1144,48 @@
             "stdout": null,
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n\nRun: openclaw doctor --fix"
           }
+        },
+        {
+          "id": "audit_a21e37dd-f150-46d2-be02-fab89707793d",
+          "timestamp": "2026-04-07T17:46:57.846Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "approved",
+          "note": "Approved for application.",
+          "status": "approved",
+          "metadata": null
+        },
+        {
+          "id": "audit_e621d8c1-8a30-406c-ad03-cbf4dd512b16",
+          "timestamp": "2026-04-07T17:46:57.851Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "applied",
+          "note": "Board updated for tighten-aries-app-dashboard-owner-handoff-states.",
+          "status": "applied",
+          "metadata": {
+            "patch": {
+              "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test D.",
+              "dependencies": [
+                "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
+                "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
+                "Confirm backend contract language to surface in the UI.",
+                "Approve backend contract wording for the dashboard handoff state labels, test I.",
+                "Approve backend contract wording for the dashboard handoff state labels, test F.",
+                "Approve backend contract wording for the dashboard handoff state labels, test E.",
+                "Approve backend contract wording for the dashboard handoff state labels, test D."
+              ]
+            }
+          }
         }
-      ]
+      ],
+      "rationale": "Explicit Brendan decision requests stay gated for review."
     },
     {
       "id": "rr_forge_1am2msu",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:jarvis-routing-approval:ms34dj",
       "createdAt": "2026-04-07T10:07:41.829Z",
-      "updatedAt": "2026-04-07T10:07:41.829Z",
+      "updatedAt": "2026-04-07T15:07:53.911Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1157,14 +1231,14 @@
       },
       "reason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test D.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.911Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1217,13 +1291,14 @@
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n\nRun: openclaw doctor --fix"
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_5feyy9",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:brendan-decision-request:jykvp3",
       "createdAt": "2026-04-07T10:08:23.741Z",
-      "updatedAt": "2026-04-07T10:08:23.741Z",
+      "updatedAt": "2026-04-07T17:46:50.273Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1279,11 +1354,11 @@
       "requiresApproval": true,
       "approvalTarget": "brendan",
       "approvalLink": null,
-      "status": "pending",
-      "decisionAt": null,
-      "decisionBy": null,
+      "status": "applied",
+      "decisionAt": "2026-04-07T17:46:50.270Z",
+      "decisionBy": "brendan",
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T17:46:50.273Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1335,14 +1410,47 @@
             "stdout": null,
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n\nRun: openclaw doctor --fix"
           }
+        },
+        {
+          "id": "audit_adac7142-2aa0-47b0-8d5c-788ed42b75e6",
+          "timestamp": "2026-04-07T17:46:50.270Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "approved",
+          "note": "Approved for application.",
+          "status": "approved",
+          "metadata": null
+        },
+        {
+          "id": "audit_27050a5b-35c8-4c3f-9934-b2157d624cf7",
+          "timestamp": "2026-04-07T17:46:50.273Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "applied",
+          "note": "Board updated for tighten-aries-app-dashboard-owner-handoff-states.",
+          "status": "applied",
+          "metadata": {
+            "patch": {
+              "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test E.",
+              "dependencies": [
+                "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
+                "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
+                "Confirm backend contract language to surface in the UI.",
+                "Approve backend contract wording for the dashboard handoff state labels, test I.",
+                "Approve backend contract wording for the dashboard handoff state labels, test F.",
+                "Approve backend contract wording for the dashboard handoff state labels, test E."
+              ]
+            }
+          }
         }
-      ]
+      ],
+      "rationale": "Explicit Brendan decision requests stay gated for review."
     },
     {
       "id": "rr_forge_qrcye2",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:jarvis-routing-approval:1b4mxud",
       "createdAt": "2026-04-07T10:08:26.142Z",
-      "updatedAt": "2026-04-07T10:08:26.142Z",
+      "updatedAt": "2026-04-07T15:07:53.913Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1388,14 +1496,14 @@
       },
       "reason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test E.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.913Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1448,13 +1556,14 @@
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n\nRun: openclaw doctor --fix"
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_deefbl",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:brendan-decision-request:upgs9v",
       "createdAt": "2026-04-07T10:09:47.886Z",
-      "updatedAt": "2026-04-07T10:09:47.886Z",
+      "updatedAt": "2026-04-07T17:46:28.562Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1510,11 +1619,11 @@
       "requiresApproval": true,
       "approvalTarget": "brendan",
       "approvalLink": null,
-      "status": "pending",
-      "decisionAt": null,
-      "decisionBy": null,
+      "status": "applied",
+      "decisionAt": "2026-04-07T17:46:28.556Z",
+      "decisionBy": "brendan",
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T17:46:28.562Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1566,14 +1675,46 @@
             "stdout": null,
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n\nRun: openclaw doctor --fix"
           }
+        },
+        {
+          "id": "audit_1be04d6f-8767-4b5a-b842-c2f5f5aa3e90",
+          "timestamp": "2026-04-07T17:46:28.557Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "approved",
+          "note": "Approved for application.",
+          "status": "approved",
+          "metadata": null
+        },
+        {
+          "id": "audit_0c3cd4f9-93cd-42a6-8a3e-9276c15d77a6",
+          "timestamp": "2026-04-07T17:46:28.562Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "applied",
+          "note": "Board updated for tighten-aries-app-dashboard-owner-handoff-states.",
+          "status": "applied",
+          "metadata": {
+            "patch": {
+              "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test F.",
+              "dependencies": [
+                "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
+                "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
+                "Confirm backend contract language to surface in the UI.",
+                "Approve backend contract wording for the dashboard handoff state labels, test I.",
+                "Approve backend contract wording for the dashboard handoff state labels, test F."
+              ]
+            }
+          }
         }
-      ]
+      ],
+      "rationale": "Explicit Brendan decision requests stay gated for review."
     },
     {
       "id": "rr_forge_ufx814",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:jarvis-routing-approval:12pqmef",
       "createdAt": "2026-04-07T10:09:50.137Z",
-      "updatedAt": "2026-04-07T10:09:50.137Z",
+      "updatedAt": "2026-04-07T15:07:53.915Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1619,14 +1760,14 @@
       },
       "reason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test F.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.915Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1679,13 +1820,14 @@
             "stderr": "Config invalid\nFile: $OPENCLAW_HOME/.openclaw/openclaw.json\nProblem:\n  - channels.slack.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n  - channels.telegram.streaming: Invalid input (allowed: true, false, \"off\", \"partial\", \"block\", \"progress\")\n\nRun: openclaw doctor --fix"
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_1qtc51r",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:brendan-decision-request:6kfxqr",
       "createdAt": "2026-04-07T10:14:39.693Z",
-      "updatedAt": "2026-04-07T10:14:39.693Z",
+      "updatedAt": "2026-04-07T17:47:16.121Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1741,11 +1883,11 @@
       "requiresApproval": true,
       "approvalTarget": "brendan",
       "approvalLink": null,
-      "status": "pending",
-      "decisionAt": null,
-      "decisionBy": null,
+      "status": "applied",
+      "decisionAt": "2026-04-07T17:47:16.116Z",
+      "decisionBy": "brendan",
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T17:47:16.121Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1797,14 +1939,50 @@
             "stdout": "",
             "stderr": ""
           }
+        },
+        {
+          "id": "audit_2c5fd538-35d5-4509-902c-2057231cbd13",
+          "timestamp": "2026-04-07T17:47:16.116Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "approved",
+          "note": "Approved for application.",
+          "status": "approved",
+          "metadata": null
+        },
+        {
+          "id": "audit_10b11d6d-6390-4715-a656-6ed2c45dee39",
+          "timestamp": "2026-04-07T17:47:16.121Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "applied",
+          "note": "Board updated for tighten-aries-app-dashboard-owner-handoff-states.",
+          "status": "applied",
+          "metadata": {
+            "patch": {
+              "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test G.",
+              "dependencies": [
+                "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
+                "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
+                "Confirm backend contract language to surface in the UI.",
+                "Approve backend contract wording for the dashboard handoff state labels, test I.",
+                "Approve backend contract wording for the dashboard handoff state labels, test F.",
+                "Approve backend contract wording for the dashboard handoff state labels, test E.",
+                "Approve backend contract wording for the dashboard handoff state labels, test D.",
+                "Approve backend contract wording for the dashboard handoff state labels, test B.",
+                "Approve backend contract wording for the dashboard handoff state labels, test G."
+              ]
+            }
+          }
         }
-      ]
+      ],
+      "rationale": "Explicit Brendan decision requests stay gated for review."
     },
     {
       "id": "rr_forge_ixm7oy",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:jarvis-routing-approval:3c61kh",
       "createdAt": "2026-04-07T10:14:47.706Z",
-      "updatedAt": "2026-04-07T10:14:47.706Z",
+      "updatedAt": "2026-04-07T15:07:53.919Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1850,14 +2028,14 @@
       },
       "reason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test G.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.919Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -1910,13 +2088,14 @@
             "stderr": ""
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_1jbt5ra",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:brendan-decision-request:xh2vfj",
       "createdAt": "2026-04-07T10:15:58.070Z",
-      "updatedAt": "2026-04-07T10:15:58.070Z",
+      "updatedAt": "2026-04-07T17:47:24.729Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -1972,11 +2151,11 @@
       "requiresApproval": true,
       "approvalTarget": "brendan",
       "approvalLink": null,
-      "status": "pending",
-      "decisionAt": null,
-      "decisionBy": null,
+      "status": "applied",
+      "decisionAt": "2026-04-07T17:47:24.725Z",
+      "decisionBy": "brendan",
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T17:47:24.729Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -2028,14 +2207,51 @@
             "stdout": "✅ Sent via Telegram. Message ID: 367",
             "stderr": null
           }
+        },
+        {
+          "id": "audit_7034fc1e-e9f7-472a-9654-d90a92e0e0b7",
+          "timestamp": "2026-04-07T17:47:24.725Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "approved",
+          "note": "Approved for application.",
+          "status": "approved",
+          "metadata": null
+        },
+        {
+          "id": "audit_51cdd59f-2a8b-4282-98f0-af6d789d9db3",
+          "timestamp": "2026-04-07T17:47:24.729Z",
+          "actorId": "brendan",
+          "actorDisplayName": "brendan",
+          "action": "applied",
+          "note": "Board updated for tighten-aries-app-dashboard-owner-handoff-states.",
+          "status": "applied",
+          "metadata": {
+            "patch": {
+              "nextAction": "Await Brendan confirmation of backend contract wording for dashboard handoff labels, test H.",
+              "dependencies": [
+                "Use current board state and PRIORITIES.md blocker language for waiting-on-backend copy",
+                "Do not introduce any new dependency on Roy during the April 7, 2026 through April 12, 2026 absence window",
+                "Confirm backend contract language to surface in the UI.",
+                "Approve backend contract wording for the dashboard handoff state labels, test I.",
+                "Approve backend contract wording for the dashboard handoff state labels, test F.",
+                "Approve backend contract wording for the dashboard handoff state labels, test E.",
+                "Approve backend contract wording for the dashboard handoff state labels, test D.",
+                "Approve backend contract wording for the dashboard handoff state labels, test B.",
+                "Approve backend contract wording for the dashboard handoff state labels, test G.",
+                "Approve backend contract wording for the dashboard handoff state labels, test H."
+              ]
+            }
+          }
         }
-      ]
+      ],
+      "rationale": "Explicit Brendan decision requests stay gated for review."
     },
     {
       "id": "rr_forge_hqydfg",
       "dedupeKey": "forge:tighten-aries-app-dashboard-owner-handoff-states:jarvis-routing-approval:p8zszj",
       "createdAt": "2026-04-07T10:16:14.060Z",
-      "updatedAt": "2026-04-07T10:16:14.060Z",
+      "updatedAt": "2026-04-07T15:07:53.922Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -2081,14 +2297,14 @@
       },
       "reason": "Upstream blocker handling still needs Jarvis routing before Forge can close the handoff state pass, test H.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.922Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -2141,7 +2357,8 @@
             "stderr": null
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_14q0c7g",
@@ -2418,7 +2635,7 @@
       "id": "rr_forge_l3jsez",
       "dedupeKey": "forge:align-onboarding-and-integrations-screens-with-current-executable-contract-truth:priority-bump-proposal:1664u3n",
       "createdAt": "2026-04-07T10:21:02.705Z",
-      "updatedAt": "2026-04-07T10:21:02.705Z",
+      "updatedAt": "2026-04-07T15:07:53.924Z",
       "sourceType": "standup",
       "sourceChiefId": "forge",
       "sourceAgentId": "delivery-chief",
@@ -2452,14 +2669,14 @@
       },
       "reason": "Rohan should move this frontend contract alignment into immediate review focus, test J.",
       "humanDependency": null,
-      "requiresApproval": true,
-      "approvalTarget": "brendan",
+      "requiresApproval": false,
+      "approvalTarget": null,
       "approvalLink": null,
-      "status": "pending",
+      "status": "applied",
       "decisionAt": null,
       "decisionBy": null,
       "decisionNote": null,
-      "appliedAt": null,
+      "appliedAt": "2026-04-07T15:07:53.924Z",
       "returnPath": {
         "chiefId": "forge",
         "actorId": "delivery-chief"
@@ -2512,7 +2729,8 @@
             "stderr": null
           }
         }
-      ]
+      ],
+      "rationale": "Mission Control can apply this change autonomously."
     },
     {
       "id": "rr_forge_1kimi2h",

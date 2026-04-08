@@ -198,8 +198,8 @@ function SummaryCard({ label, value, tone = "neutral" }: { label: string; value:
 
 function statusBadgeClass(status: string) {
   const normalized = status.toLowerCase();
-  if (normalized === "complete" || normalized === "completed" || normalized === "healthy") return "status-done";
-  if (normalized === "failed" || normalized === "error") return "status-failed";
-  if (normalized === "partial" || normalized === "source-unavailable" || normalized === "timed-out") return "status-unavailable";
+  if (normalized === "complete" || normalized === "completed" || normalized === "healthy") {return "status-done";}
+  if (normalized === "failed" || normalized === "error") {return "status-failed";}
+  if (normalized === "partial" || normalized === "source-unavailable" || normalized === "timed-out") {return "status-unavailable";}
   return "neutral";
 }

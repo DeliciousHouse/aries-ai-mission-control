@@ -52,13 +52,13 @@ export function BuildLabPage({ payload }: { payload: BuildLabPayload }) {
 
   const filteredIdeas = useMemo(() => {
     const items = payload.ideas.items.filter((item) => {
-      if (laneFilter !== "all" && item.workstream !== laneFilter) return false;
-      if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
-      if (workstreamFilter !== "all" && item.workstream !== workstreamFilter) return false;
+      if (laneFilter !== "all" && item.workstream !== laneFilter) {return false;}
+      if (categoryFilter !== "all" && item.category !== categoryFilter) {return false;}
+      if (workstreamFilter !== "all" && item.workstream !== workstreamFilter) {return false;}
       return true;
     });
 
-    return [...items].sort((left, right) => {
+    return [...items].toSorted((left, right) => {
       if (sortMode === "highest-score") {
         return (right.totalScore ?? Number.NEGATIVE_INFINITY) - (left.totalScore ?? Number.NEGATIVE_INFINITY);
       }
@@ -163,12 +163,12 @@ function OverviewSection({ payload, onSelect }: { payload: BuildLabPayload; onSe
   const ownershipSummary = Object.entries(
     payload.prototypes.items.reduce<Record<string, number>>((accumulator, item) => {
       const owner = item.owner?.trim();
-      if (!owner || owner.toLowerCase() === "unassigned") return accumulator;
+      if (!owner || owner.toLowerCase() === "unassigned") {return accumulator;}
       accumulator[owner] = (accumulator[owner] || 0) + 1;
       return accumulator;
     }, {}),
   )
-    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .toSorted((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
     .slice(0, 3);
 
   return (
@@ -692,7 +692,7 @@ function EmptyCard({ message }: { message: string }) {
 }
 
 function artifactStateClass(state: BuildArtifact["state"]) {
-  if (state === "available") return "status-connected";
-  if (state === "empty") return "status-unavailable";
+  if (state === "available") {return "status-connected";}
+  if (state === "empty") {return "status-unavailable";}
   return "status-disabled";
 }

@@ -19,7 +19,7 @@ export function useHashRoute() {
 
   const navigate = useMemo(
     () => (nextRoute: RouteId) => {
-      if (nextRoute === route) return;
+      if (nextRoute === route) {return;}
       window.location.hash = `#/${nextRoute}`;
     },
     [route],

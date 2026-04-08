@@ -4,22 +4,22 @@ import { orgMemberHref, readOrgMemberFromLocation, replaceOrgMemberInLocation } 
 import type { OrgActivityItem, OrgMemberRecord, OrgPayload } from "../types";
 
 function presenceClass(status: string | null | undefined) {
-  if (status === "online") return "status-connected";
-  if (status === "offline") return "status-failed";
+  if (status === "online") {return "status-connected";}
+  if (status === "offline") {return "status-failed";}
   return "status-unavailable";
 }
 
 function presenceLabel(status: string | null | undefined) {
-  if (status === "online") return "Online";
-  if (status === "offline") return "Offline";
+  if (status === "online") {return "Online";}
+  if (status === "offline") {return "Offline";}
   return "Unavailable";
 }
 
 function departmentTone(member: OrgMemberRecord) {
-  if (member.id === "jarvis") return "tone-jarvis";
-  if (member.id === "forge") return "tone-forge";
-  if (member.id === "signal") return "tone-signal";
-  if (member.id === "ledger") return "tone-ledger";
+  if (member.id === "jarvis") {return "tone-jarvis";}
+  if (member.id === "forge") {return "tone-forge";}
+  if (member.id === "signal") {return "tone-signal";}
+  if (member.id === "ledger") {return "tone-ledger";}
   return "tone-neutral";
 }
 
@@ -36,14 +36,14 @@ function statusLabel(value: string) {
 }
 
 function boardLoadLabel(member: OrgMemberRecord) {
-  if (!member.board.total) return "No board load";
+  if (!member.board.total) {return "No board load";}
   return `${member.board.open} open • ${member.board.blocked} blocked`;
 }
 
 function summaryBadgeClass(status: string | null | undefined) {
-  if (status === "complete") return "status-done";
-  if (status === "failed") return "status-failed";
-  if (status === "partial") return "status-unavailable";
+  if (status === "complete") {return "status-done";}
+  if (status === "failed") {return "status-failed";}
+  if (status === "partial") {return "status-unavailable";}
   return "status-unavailable";
 }
 

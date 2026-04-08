@@ -34,14 +34,14 @@ function formatJson(value: unknown) {
 }
 
 function badgeTone(status: string) {
-  if (["applied", "approved", "delivered"].includes(status)) return "status-done";
-  if (["rejected", "failed"].includes(status)) return "status-failed";
-  if (["pending", "unavailable"].includes(status)) return "status-unavailable";
+  if (["applied", "approved", "delivered"].includes(status)) {return "status-done";}
+  if (["rejected", "failed"].includes(status)) {return "status-failed";}
+  if (["pending", "unavailable"].includes(status)) {return "status-unavailable";}
   return "neutral";
 }
 
 function taskBoardHref(taskId: string | null) {
-  if (!taskId) return null;
+  if (!taskId) {return null;}
   return `/?taskId=${encodeURIComponent(taskId)}#/command`;
 }
 
@@ -63,7 +63,7 @@ export function RoutingRequestsPanel({ state }: Props) {
   const selected = useMemo(() => requests.find((request) => request.id === selectedId) || null, [requests, selectedId]);
 
   useEffect(() => {
-    if (selectedId || !requests.length) return;
+    if (selectedId || !requests.length) {return;}
     const params = new URLSearchParams(window.location.search);
     const initialId = params.get("approvalId");
     if (initialId && requests.some((request) => request.id === initialId)) {
@@ -74,7 +74,7 @@ export function RoutingRequestsPanel({ state }: Props) {
   }, [requests, selectedId]);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId) {return;}
     const url = new URL(window.location.href);
     url.searchParams.set("commandView", "approvals");
     url.searchParams.set("approvalId", selectedId);
@@ -83,16 +83,16 @@ export function RoutingRequestsPanel({ state }: Props) {
 
   const visible = useMemo(() => {
     return requests.filter((request) => {
-      if (filters.status !== "all" && request.status !== filters.status) return false;
-      if (filters.chief !== "all" && request.sourceChiefId !== filters.chief) return false;
-      if (filters.requestType !== "all" && request.requestType !== filters.requestType) return false;
-      if (filters.relatedTaskId !== "all" && request.relatedTaskId !== filters.relatedTaskId) return false;
+      if (filters.status !== "all" && request.status !== filters.status) {return false;}
+      if (filters.chief !== "all" && request.sourceChiefId !== filters.chief) {return false;}
+      if (filters.requestType !== "all" && request.requestType !== filters.requestType) {return false;}
+      if (filters.relatedTaskId !== "all" && request.relatedTaskId !== filters.relatedTaskId) {return false;}
       return true;
     });
   }, [filters, requests]);
 
   async function handleDecision(action: "approve" | "reject") {
-    if (!selected) return;
+    if (!selected) {return;}
     try {
       setSaving(true);
       setError(null);

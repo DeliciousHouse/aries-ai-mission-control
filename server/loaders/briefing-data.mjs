@@ -13,14 +13,14 @@ function inferType(relativePath, markdown) {
   const lowerPath = relativePath.toLowerCase();
   const lowerMarkdown = markdown.toLowerCase();
 
-  if (lowerPath.startsWith("docs/briefs/")) return "daily-engineering-brief";
-  if (lowerPath === "docs/system-reference.md") return "system-reference";
-  if (lowerPath.startsWith("memory/")) return "implementation-lessons";
-  if (lowerPath.startsWith("docs/plans/")) return "plan";
-  if (lowerPath.includes("blocker") || lowerMarkdown.includes("blocker")) return "current-blockers";
-  if (lowerPath.includes("decision") || lowerMarkdown.includes("decision")) return "decisions-made";
-  if (lowerPath.includes("handoff") || lowerMarkdown.includes("handoff")) return "handoff-notes";
-  if (lowerPath.includes("bootcamp") || lowerMarkdown.includes("bootcamp")) return "bootcamp-translation";
+  if (lowerPath.startsWith("docs/briefs/")) {return "daily-engineering-brief";}
+  if (lowerPath === "docs/system-reference.md") {return "system-reference";}
+  if (lowerPath.startsWith("memory/")) {return "implementation-lessons";}
+  if (lowerPath.startsWith("docs/plans/")) {return "plan";}
+  if (lowerPath.includes("blocker") || lowerMarkdown.includes("blocker")) {return "current-blockers";}
+  if (lowerPath.includes("decision") || lowerMarkdown.includes("decision")) {return "decisions-made";}
+  if (lowerPath.includes("handoff") || lowerMarkdown.includes("handoff")) {return "handoff-notes";}
+  if (lowerPath.includes("bootcamp") || lowerMarkdown.includes("bootcamp")) {return "bootcamp-translation";}
   return "note";
 }
 
@@ -48,10 +48,10 @@ export async function loadBriefingData() {
   const briefs = [];
 
   for (const filePath of filePaths) {
-    if (seen.has(filePath)) continue;
+    if (seen.has(filePath)) {continue;}
     seen.add(filePath);
     const result = await readTextIfExists(filePath);
-    if (!result) continue;
+    if (!result) {continue;}
 
     const relativePath = relativeToRepo(repoRoot, filePath);
     const type = inferType(relativePath, result.content);

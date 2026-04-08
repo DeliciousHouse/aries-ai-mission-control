@@ -4,6 +4,15 @@ import { runOpenClawJson } from "../lib/cli.mjs";
 import { readJson, toIso } from "../lib/fs-utils.mjs";
 
 const openclawConfigPath = path.join(os.homedir(), ".openclaw", "openclaw.json");
+const openclawCronJobsPath = path.join(os.homedir(), ".openclaw", "cron", "jobs.json");
+
+async function loadCronJobsSnapshot() {
+  try {
+    return await readJson(openclawCronJobsPath, { jobs: [] });
+  } catch {
+    return await runOpenClawJson(["cron", "list", "--all", "--json"]);
+  }
+}
 
 function settledToSource(id, label, command, result) {
   const checkedAt = toIso(Date.now());
@@ -33,17 +42,17 @@ function settledToSource(id, label, command, result) {
 }
 
 function normalizeSessionType(sessionKey) {
-  if (sessionKey.includes(":subagent:")) return "sub-agent";
-  if (sessionKey.includes(":cron:")) return "cron";
-  if (sessionKey.includes(":thread:")) return "thread";
-  if (sessionKey.includes(":main")) return "main";
+  if (sessionKey.includes(":subagent:")) {return "sub-agent";}
+  if (sessionKey.includes(":cron:")) {return "cron";}
+  if (sessionKey.includes(":thread:")) {return "thread";}
+  if (sessionKey.includes(":main")) {return "main";}
   return "session";
 }
 
 function normalizeSessionState(ageMs) {
-  if (typeof ageMs !== "number") return null;
-  if (ageMs <= 5 * 60 * 1000) return "recently active";
-  if (ageMs <= 60 * 60 * 1000) return "warm";
+  if (typeof ageMs !== "number") {return null;}
+  if (ageMs <= 5 * 60 * 1000) {return "recently active";}
+  if (ageMs <= 60 * 60 * 1000) {return "warm";}
   return "idle";
 }
 
@@ -54,17 +63,17 @@ function mapHealthStatus(ok) {
 function commandDetail(result, connectedDetail, emptyDetail) {
   if (result.status === "fulfilled") {
     const value = result.value;
-    if (Array.isArray(value) && value.length === 0) return emptyDetail;
-    if (Array.isArray(value?.tasks) && value.tasks.length === 0) return emptyDetail;
-    if (Array.isArray(value?.sessions) && value.sessions.length === 0) return emptyDetail;
-    if (Array.isArray(value?.flows) && value.flows.length === 0) return emptyDetail;
+    if (Array.isArray(value) && value.length === 0) {return emptyDetail;}
+    if (Array.isArray(value?.tasks) && value.tasks.length === 0) {return emptyDetail;}
+    if (Array.isArray(value?.sessions) && value.sessions.length === 0) {return emptyDetail;}
+    if (Array.isArray(value?.flows) && value.flows.length === 0) {return emptyDetail;}
     return connectedDetail;
   }
   return result.reason instanceof Error ? result.reason.message : "Source unavailable.";
 }
 
 function connectionState(result, rows) {
-  if (result.status !== "fulfilled") return "disconnected";
+  if (result.status !== "fulfilled") {return "disconnected";}
   return rows.length ? "connected" : "empty";
 }
 
@@ -120,7 +129,7 @@ async function loadConfigSessions() {
 
   return {
     config,
-    rows: rows.sort((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0)),
+    rows: rows.toSorted((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0)),
   };
 }
 
@@ -133,7 +142,7 @@ export async function loadRuntimeData() {
     healthResult,
   ] = await Promise.all([
     settleFromPromise(loadConfigSessions()),
-    settle(["cron", "list", "--all", "--json"]),
+    settleFromPromise(loadCronJobsSnapshot()),
     settle(["health", "--json"]),
   ]);
 
@@ -201,7 +210,7 @@ export async function loadRuntimeData() {
       state: "disconnected",
       detail: "Detailed task rows are intentionally removed from the fast runtime endpoint because the current task-source commands exceed the route timeout budget.",
     },
-    settledToSource("cron-list", "Cron jobs", "openclaw cron list --all --json", cronListResult),
+    settledToSource("cron-list", "Cron jobs", `cat ${openclawCronJobsPath}`, cronListResult),
     settledToSource("health", "Health", "openclaw health --json", healthResult),
     settledToSource("models", "Model config", "~/.openclaw/openclaw.json + session metadata", sessionsResult),
   ];

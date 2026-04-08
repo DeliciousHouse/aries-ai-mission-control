@@ -79,7 +79,7 @@ const routeHrefs = {
 
 function parseOffsetLabel(label: string) {
   const match = /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(label || "");
-  if (!match) return 0;
+  if (!match) {return 0;}
   const sign = match[1] === "-" ? -1 : 1;
   const hours = Number(match[2] || 0);
   const minutes = Number(match[3] || 0);
@@ -168,14 +168,14 @@ function formatCutoffLabel(cutoffMs: number, timeZone = DASHBOARD_TIME_ZONE) {
 }
 
 function pickNewest<T>(items: T[], selector: (item: T) => string | null | undefined) {
-  const sorted = [...items].sort((left, right) => (Date.parse(selector(right) || "") || 0) - (Date.parse(selector(left) || "") || 0));
+  const sorted = [...items].toSorted((left, right) => (Date.parse(selector(right) || "") || 0) - (Date.parse(selector(left) || "") || 0));
   return sorted[0] || null;
 }
 
 function statusTone(status: string) {
-  if (["failed", "down", "degraded", "danger"].includes(status)) return "danger";
-  if (["unavailable", "disconnected", "unknown", "warning", "offline"].includes(status)) return "warning";
-  if (["healthy", "connected", "Delivered", "success", "online"].includes(status)) return "success";
+  if (["failed", "down", "degraded", "danger"].includes(status)) {return "danger";}
+  if (["unavailable", "disconnected", "unknown", "warning", "offline"].includes(status)) {return "warning";}
+  if (["healthy", "connected", "Delivered", "success", "online"].includes(status)) {return "success";}
   return "neutral";
 }
 
@@ -190,11 +190,11 @@ function shortDisplayName(actor: ProjectBoardActor | undefined, fallback: string
 }
 
 function ownerToneClass(record: OwnerLoadCardRecord) {
-  if (record.id === "jarvis") return "tone-jarvis";
-  if (record.id === "forge") return "tone-forge";
-  if (record.id === "signal") return "tone-signal";
-  if (record.id === "ledger") return "tone-ledger";
-  if (record.assigneeType === "human-collaborator") return "tone-human";
+  if (record.id === "jarvis") {return "tone-jarvis";}
+  if (record.id === "forge") {return "tone-forge";}
+  if (record.id === "signal") {return "tone-signal";}
+  if (record.id === "ledger") {return "tone-ledger";}
+  if (record.assigneeType === "human-collaborator") {return "tone-human";}
   return "tone-neutral";
 }
 
@@ -234,7 +234,7 @@ export function CommandPage({ payload, commandState, buildLab, runtime, org, bri
     const cronData = cronHealth.data?.data;
     const recentJobs = (cronData?.jobs ?? [])
       .filter((job) => isSinceCutoff(job.lastRun, cutoffMs))
-      .sort((left, right) => (Date.parse(right.lastRun || "") || 0) - (Date.parse(left.lastRun || "") || 0))
+      .toSorted((left, right) => (Date.parse(right.lastRun || "") || 0) - (Date.parse(left.lastRun || "") || 0))
       .map((job) => ({
         id: job.id,
         name: job.name,
@@ -281,7 +281,7 @@ export function CommandPage({ payload, commandState, buildLab, runtime, org, bri
 
     const delegationQueueTasks = tasks
       .filter((task) => ["intake", "scoping", "ready"].includes(task.status))
-      .sort((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0));
+      .toSorted((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0));
 
     const delegationQueueByAssignee = delegationQueueTasks.reduce<Record<string, { label: string; href: string; count: number; tasks: string[] }>>((accumulator, task) => {
       if (!accumulator[task.assigneeId]) {
@@ -442,7 +442,7 @@ export function CommandPage({ payload, commandState, buildLab, runtime, org, bri
       delegationQueue: {
         total: delegationQueueTasks.length,
         groups: Object.values(delegationQueueByAssignee)
-          .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label))
+          .toSorted((left, right) => right.count - left.count || left.label.localeCompare(right.label))
           .slice(0, 4),
       },
       attention: attention.slice(0, 8),
@@ -466,7 +466,7 @@ export function CommandPage({ payload, commandState, buildLab, runtime, org, bri
         const member = orgMembers.find((entry) => entry.id === assigneeId);
         const shipped = assigneeTasks.filter((task) => task.status === "shipped").length;
         const open = assigneeTasks.length - shipped;
-        const newestTask = [...assigneeTasks].sort((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0))[0] || null;
+        const newestTask = [...assigneeTasks].toSorted((left, right) => (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0))[0] || null;
 
         return {
           id: assigneeId,
@@ -487,7 +487,7 @@ export function CommandPage({ payload, commandState, buildLab, runtime, org, bri
           assigneeType: actor?.assigneeType || newestTask?.assigneeType || "ai-specialist",
         } satisfies OwnerLoadCardRecord;
       })
-      .sort((left, right) => right.open - left.open || right.blocked - left.blocked || (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0))
+      .toSorted((left, right) => right.open - left.open || right.blocked - left.blocked || (Date.parse(right.updatedAt || "") || 0) - (Date.parse(left.updatedAt || "") || 0))
       .slice(0, 6);
   }, [actorById, org.data?.data?.members, tasks]);
 
@@ -913,9 +913,9 @@ function LoopCard({ item }: { item: CommandLoopRecord }) {
 }
 
 function resourceDetail<T>(state: ResourceState<T>) {
-  if (!state.attempted && !state.data && !state.error) return "Deferred until the shell is stable.";
-  if (state.loading) return "Loading…";
-  if (state.error) return state.error;
-  if (!state.data) return "Unavailable";
+  if (!state.attempted && !state.data && !state.error) {return "Deferred until the shell is stable.";}
+  if (state.loading) {return "Loading…";}
+  if (state.error) {return state.error;}
+  if (!state.data) {return "Unavailable";}
   return "Connected";
 }

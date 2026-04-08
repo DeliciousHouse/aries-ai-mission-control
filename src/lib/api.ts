@@ -51,7 +51,7 @@ async function getJson<T>(path: string, options: RequestOptions = {}): Promise<A
     response = await fetch(path, { cache: "no-store", signal: controller.signal });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s`);
+      throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s`, { cause: error });
     }
     throw error;
   } finally {
@@ -69,7 +69,7 @@ async function sendJson<T>(path: string, init: RequestInit): Promise<T> {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      ...(init.headers || {}),
+      ...init.headers,
     },
   });
   if (!response.ok) {

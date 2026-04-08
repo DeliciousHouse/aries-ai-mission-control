@@ -26,22 +26,22 @@ function statusLabel(value) {
 }
 
 function maybeIso(value) {
-  if (typeof value === "number" && Number.isFinite(value)) return toIso(value);
+  if (typeof value === "number" && Number.isFinite(value)) {return toIso(value);}
   if (typeof value === "string" && value) {
     const parsed = Date.parse(value);
-    if (Number.isFinite(parsed)) return toIso(parsed);
+    if (Number.isFinite(parsed)) {return toIso(parsed);}
   }
   return null;
 }
 
 function sessionTimestampMs(session) {
-  if (typeof session?.updatedAt === "number" && Number.isFinite(session.updatedAt)) return session.updatedAt;
+  if (typeof session?.updatedAt === "number" && Number.isFinite(session.updatedAt)) {return session.updatedAt;}
   const parsed = Date.parse(session?.updatedAt || "");
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function sessionAgeMs(session) {
-  if (typeof session?.ageMs === "number" && Number.isFinite(session.ageMs)) return session.ageMs;
+  if (typeof session?.ageMs === "number" && Number.isFinite(session.ageMs)) {return session.ageMs;}
   const updatedAtMs = sessionTimestampMs(session);
   return updatedAtMs ? Math.max(Date.now() - updatedAtMs, 0) : null;
 }
@@ -49,7 +49,7 @@ function sessionAgeMs(session) {
 function combinedModelLabel(model, provider) {
   const normalizedModel = normalizeText(model);
   const normalizedProvider = normalizeText(provider);
-  if (!normalizedModel) return null;
+  if (!normalizedModel) {return null;}
   if (normalizedProvider && !normalizedModel.includes("/")) {
     return `${normalizedProvider}/${normalizedModel}`;
   }
@@ -75,26 +75,26 @@ function findMatchingAgent(member, configAgents = []) {
     .map((agent) => {
       const names = [agent?.id, agent?.name, agent?.identity?.name].map(normalizeName).filter(Boolean);
       let score = 0;
-      if (member.id === "jarvis" && names.includes("default")) score += 100;
-      if (names.includes(memberId)) score += 80;
-      if (names.includes(memberName)) score += 90;
-      if (names.some((value) => value && memberName && (value.includes(memberName) || memberName.includes(value)))) score += 20;
+      if (member.id === "jarvis" && names.includes("default")) {score += 100;}
+      if (names.includes(memberId)) {score += 80;}
+      if (names.includes(memberName)) {score += 90;}
+      if (names.some((value) => value && memberName && (value.includes(memberName) || memberName.includes(value)))) {score += 20;}
       return { agent, score };
     })
     .filter((entry) => entry.score > 0)
-    .sort((left, right) => right.score - left.score);
+    .toSorted((left, right) => right.score - left.score);
 
   return scored[0]?.agent || null;
 }
 
 function onlineThresholdMs(heartbeatConfig) {
   const everyMs = Number(heartbeatConfig?.everyMs || 0);
-  if (!everyMs) return MIN_ONLINE_THRESHOLD_MS;
+  if (!everyMs) {return MIN_ONLINE_THRESHOLD_MS;}
   return Math.max(MIN_ONLINE_THRESHOLD_MS, Math.min(Math.round(everyMs * 1.25), MAX_ONLINE_THRESHOLD_MS));
 }
 
 function sortNewest(items, selector) {
-  return [...items].sort((left, right) => (Date.parse(selector(right) || "") || 0) - (Date.parse(selector(left) || "") || 0));
+  return [...items].toSorted((left, right) => (Date.parse(selector(right) || "") || 0) - (Date.parse(selector(left) || "") || 0));
 }
 
 function extractSection(markdown, heading) {
@@ -113,7 +113,7 @@ function extractBullets(section) {
 
 function firstLineMention(markdown, name) {
   const normalizedName = normalizeName(name);
-  if (!normalizedName) return null;
+  if (!normalizedName) {return null;}
 
   const prioritizedSections = [extractSection(markdown, "Human Dependencies"), extractSection(markdown, "Top Summary"), markdown];
   for (const section of prioritizedSections) {
@@ -173,7 +173,7 @@ function buildBoardLoad(tasks) {
 
 function recentBoardActivity(tasks) {
   const latest = sortNewest(tasks, (task) => task.updatedAt)[0] || null;
-  if (!latest) return null;
+  if (!latest) {return null;}
   return {
     timestamp: latest.updatedAt,
     detail: `${statusLabel(latest.status)} • ${latest.title}`,
@@ -183,7 +183,7 @@ function recentBoardActivity(tasks) {
 }
 
 function recentSessionActivity(session, runtime) {
-  if (!session || !runtime) return null;
+  if (!session || !runtime) {return null;}
   const updatedAt = maybeIso(session.updatedAt);
   return {
     timestamp: updatedAt,
@@ -194,7 +194,7 @@ function recentSessionActivity(session, runtime) {
 }
 
 function recentStandupActivity(standupState) {
-  if (!standupState?.latestMention || !standupState?.latestStandupDate) return null;
+  if (!standupState?.latestMention || !standupState?.latestStandupDate) {return null;}
   return {
     timestamp: standupState.latestStandupDate,
     detail: `${statusLabel(standupState.latestStandupStatus || "partial")} • ${standupState.latestMention}`,
@@ -234,7 +234,7 @@ function buildRuntimeState(member, matchedAgent, sessionsResult) {
   const sessions = sessionsResult.status === "fulfilled" && Array.isArray(sessionsResult.value?.sessions) ? sessionsResult.value.sessions : [];
   const latestFromSessions = sessions
     .filter((session) => normalizeText(session.agentId) === matchedAgent.id)
-    .sort((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null;
+    .toSorted((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null;
   const latest = latestFromSessions;
 
   if (!latest) {
@@ -278,7 +278,7 @@ async function loadAgentSessions(configAgents = []) {
   const sessions = [];
   for (const agent of configAgents) {
     const sessionPath = path.join(os.homedir(), ".openclaw", "agents", agent.id, "sessions", "sessions.json");
-    if (!existsSync(sessionPath)) continue;
+    if (!existsSync(sessionPath)) {continue;}
 
     try {
       const payload = await readJson(sessionPath);
@@ -388,7 +388,7 @@ export async function loadOrgData() {
     const latestSession = matchedAgent
       ? ((sessionPayload?.sessions || [])
           .filter((session) => normalizeText(session.agentId) === matchedAgent.id)
-          .sort((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null)
+          .toSorted((left, right) => sessionTimestampMs(right) - sessionTimestampMs(left))[0] || null)
       : null;
 
     const activityItems = [
@@ -397,7 +397,7 @@ export async function loadOrgData() {
       recentStandupActivity(standupState),
     ]
       .filter(Boolean)
-      .sort((left, right) => (Date.parse(right.timestamp || "") || 0) - (Date.parse(left.timestamp || "") || 0))
+      .toSorted((left, right) => (Date.parse(right.timestamp || "") || 0) - (Date.parse(left.timestamp || "") || 0))
       .slice(0, 3)
       .map((item, index) => ({
         id: `${member.id}-${item.source}-${index}`,
@@ -438,8 +438,8 @@ export async function loadOrgData() {
 
   const orderedMembers = [
     ...members.filter((member) => member.id === "jarvis"),
-    ...members.filter((member) => member.isChief).sort((left, right) => left.name.localeCompare(right.name)),
-    ...members.filter((member) => member.memberKind === "human").sort((left, right) => left.name.localeCompare(right.name)),
+    ...members.filter((member) => member.isChief).toSorted((left, right) => left.name.localeCompare(right.name)),
+    ...members.filter((member) => member.memberKind === "human").toSorted((left, right) => left.name.localeCompare(right.name)),
   ];
 
   return {

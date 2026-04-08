@@ -71,7 +71,7 @@ function slugify(value) {
 }
 
 function asTrimmedString(value) {
-  if (typeof value !== "string") return "";
+  if (typeof value !== "string") {return "";}
   return value.trim();
 }
 
@@ -114,16 +114,16 @@ function domainLabel(domain) {
 }
 
 function normalizeLegacyStatus(status, blocked) {
-  if (PROJECT_BOARD_STATUSES.includes(status)) return status;
-  if (status === "todo") return "intake";
-  if (status === "in_progress") return "active";
-  if (status === "done") return "shipped";
-  if (status === "blocked") return "active";
+  if (PROJECT_BOARD_STATUSES.includes(status)) {return status;}
+  if (status === "todo") {return "intake";}
+  if (status === "in_progress") {return "active";}
+  if (status === "done") {return "shipped";}
+  if (status === "blocked") {return "active";}
   return blocked ? "active" : "intake";
 }
 
 function inferTaskDomain(rawTask) {
-  if (PROJECT_BOARD_TASK_DOMAINS.includes(rawTask.taskDomain)) return rawTask.taskDomain;
+  if (PROJECT_BOARD_TASK_DOMAINS.includes(rawTask.taskDomain)) {return rawTask.taskDomain;}
 
   const scope = asTrimmedString(rawTask.systemScope).toLowerCase();
   const workstream = asTrimmedString(rawTask.workstream).toLowerCase();
@@ -131,28 +131,28 @@ function inferTaskDomain(rawTask) {
   const title = `${asTrimmedString(rawTask.title)} ${asTrimmedString(rawTask.description)}`.toLowerCase();
   const combined = `${scope} ${workstream} ${owner} ${title}`;
 
-  if (scope === "mission-control" || /mission control/.test(combined)) return "mission-control";
-  if (scope === "openclaw" || /openclaw/.test(combined)) return "openclaw-change";
-  if (/\bfrontend\b|ui|ux|layout|client/.test(combined) || owner === "rohan") return "frontend";
-  if (/\bbackend\b|api|adapter|server|db|database|integration/.test(combined) || owner === "roy") return "backend";
-  if (/manual|qa checklist|human-required|human required/.test(combined) || owner === "somwya") return "manual-ops";
-  if (scope === "runtime" || /runtime|cron|scheduler|session|taskflow|model usage|health/.test(combined)) return "runtime-automation";
-  if (scope === "knowledge" || scope === "operations" || /brief|memory|handoff|knowledge|ops/.test(combined)) return "operations-knowledge";
+  if (scope === "mission-control" || /mission control/.test(combined)) {return "mission-control";}
+  if (scope === "openclaw" || /openclaw/.test(combined)) {return "openclaw-change";}
+  if (/\bfrontend\b|ui|ux|layout|client/.test(combined) || owner === "rohan") {return "frontend";}
+  if (/\bbackend\b|api|adapter|server|db|database|integration/.test(combined) || owner === "roy") {return "backend";}
+  if (/manual|qa checklist|human-required|human required/.test(combined) || owner === "somwya") {return "manual-ops";}
+  if (scope === "runtime" || /runtime|cron|scheduler|session|taskflow|model usage|health/.test(combined)) {return "runtime-automation";}
+  if (scope === "knowledge" || scope === "operations" || /brief|memory|handoff|knowledge|ops/.test(combined)) {return "operations-knowledge";}
   return "frontend";
 }
 
 function inferSystemScope(rawTask, taskDomain) {
-  if (PROJECT_BOARD_SYSTEM_SCOPES.includes(rawTask.systemScope)) return rawTask.systemScope;
-  if (taskDomain === "mission-control") return "mission-control";
-  if (taskDomain === "openclaw-change") return "openclaw";
-  if (taskDomain === "runtime-automation") return "runtime";
-  if (taskDomain === "operations-knowledge") return "knowledge";
-  if (taskDomain === "manual-ops") return "operations";
+  if (PROJECT_BOARD_SYSTEM_SCOPES.includes(rawTask.systemScope)) {return rawTask.systemScope;}
+  if (taskDomain === "mission-control") {return "mission-control";}
+  if (taskDomain === "openclaw-change") {return "openclaw";}
+  if (taskDomain === "runtime-automation") {return "runtime";}
+  if (taskDomain === "operations-knowledge") {return "knowledge";}
+  if (taskDomain === "manual-ops") {return "operations";}
   return "aries-app";
 }
 
 function inferExecutionMode(rawTask, taskDomain, systemScope) {
-  if (PROJECT_BOARD_EXECUTION_MODES.includes(rawTask.executionMode)) return rawTask.executionMode;
+  if (PROJECT_BOARD_EXECUTION_MODES.includes(rawTask.executionMode)) {return rawTask.executionMode;}
   if (taskDomain === "openclaw-change" || systemScope === "openclaw") {
     return "proposal-for-brendan-review";
   }
@@ -161,8 +161,8 @@ function inferExecutionMode(rawTask, taskDomain, systemScope) {
 
 function resolveActorId(value, directory) {
   const normalized = asTrimmedString(value).toLowerCase();
-  if (!normalized) return null;
-  if (directory.byId.has(normalized)) return normalized;
+  if (!normalized) {return null;}
+  if (directory.byId.has(normalized)) {return normalized;}
 
   for (const actor of directory.actors) {
     const candidates = [actor.id, actor.name, actor.displayName, actor.label, actor.title]
@@ -348,7 +348,7 @@ function enrichTask(task, directory) {
 
 function ensureUniqueId(baseId, tasks) {
   const existing = new Set(tasks.map((task) => task.id));
-  if (!existing.has(baseId)) return baseId;
+  if (!existing.has(baseId)) {return baseId;}
   let counter = 2;
   while (existing.has(`${baseId}-${counter}`)) {
     counter += 1;
@@ -605,11 +605,11 @@ function computeQuickViews(tasks) {
   return views.map((view) => ({
     ...view,
     count: tasks.filter((task) => {
-      if (view.filters.assigneeId && task.assigneeId !== view.filters.assigneeId) return false;
-      if (view.filters.systemScope && task.systemScope !== view.filters.systemScope) return false;
-      if (view.filters.taskDomain && task.taskDomain !== view.filters.taskDomain) return false;
-      if (view.filters.blocked && !task.blocked) return false;
-      if (view.filters.stale && !task.stale) return false;
+      if (view.filters.assigneeId && task.assigneeId !== view.filters.assigneeId) {return false;}
+      if (view.filters.systemScope && task.systemScope !== view.filters.systemScope) {return false;}
+      if (view.filters.taskDomain && task.taskDomain !== view.filters.taskDomain) {return false;}
+      if (view.filters.blocked && !task.blocked) {return false;}
+      if (view.filters.stale && !task.stale) {return false;}
       return true;
     }).length,
   }));
@@ -623,7 +623,7 @@ export async function loadProjectBoardPayload() {
   const { record, directory } = await readBoardRecord();
   const tasks = record.tasks
     .map((task) => enrichTask(task, directory))
-    .sort((left, right) => (Date.parse(right.updatedAt) || 0) - (Date.parse(left.updatedAt) || 0));
+    .toSorted((left, right) => (Date.parse(right.updatedAt) || 0) - (Date.parse(left.updatedAt) || 0));
 
   return {
     source: {
@@ -640,7 +640,7 @@ export async function loadProjectBoardPayload() {
       assignees: directory.assignableActors.map((actor) => ({ value: actor.id, label: actor.label })),
       statuses: optionList(PROJECT_BOARD_STATUSES, statusLabel),
       priorities: optionList(PROJECT_BOARD_PRIORITIES),
-      workstreams: optionList(unique(tasks.map((task) => task.workstream)).sort()),
+      workstreams: optionList(unique(tasks.map((task) => task.workstream)).toSorted()),
       systemScopes: optionList(PROJECT_BOARD_SYSTEM_SCOPES, domainLabel),
       taskDomains: optionList(PROJECT_BOARD_TASK_DOMAINS, domainLabel),
     },
@@ -695,7 +695,7 @@ export async function updateProjectBoardTask(taskId, input) {
   const now = toIso(Date.now());
   const candidate = {
     ...current,
-    ...(input.updates || {}),
+    ...input.updates,
     status: input.updates?.status ?? current.status,
     priority: input.updates?.priority ?? current.priority,
     systemScope: input.updates?.systemScope ?? current.systemScope,
@@ -788,7 +788,7 @@ export async function readJsonBody(req) {
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
   const raw = Buffer.concat(chunks).toString("utf8").trim();
-  if (!raw) return {};
+  if (!raw) {return {};}
   try {
     return JSON.parse(raw);
   } catch {

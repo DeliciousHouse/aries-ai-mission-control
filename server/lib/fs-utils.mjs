@@ -83,7 +83,7 @@ export function relativeToRepo(repoRoot, targetPath) {
 }
 
 export function formatBytes(value) {
-  if (!Number.isFinite(value) || value <= 0) return "0 B";
+  if (!Number.isFinite(value) || value <= 0) {return "0 B";}
   const units = ["B", "KB", "MB", "GB"];
   let size = value;
   let index = 0;
